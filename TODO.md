@@ -1,33 +1,21 @@
-# things
+# Things to do
 
-Big Bang,2022.09.24,bang
-guests
-MISTI Armenia,2022.10.29,armenia
-guests
+## Algorithm
 
-- lottery for these two only has name of submitting person
-Fall in New England,2022.11.12,fall
-guests
-Night at the Art Gallery,2022.12.03,art
-guests
-MISTI India,2023.03.04,india
-guests
-Romance Through Films,2023.03.18,datamatch
-High Tea,2023.10.14,tea
+- Take seniority into account somehow; score being equal, seniors should have priority
+  - class year in form
+- output group reflects the input distribution; if x% are first-timers in lottery submissions, x% in final 40?
+- penalty for going to popup: figure this out. $n/x$?
+  - ban of 1 year?
+  - increasing negative penalty?
+- guidelines for tuning temperature?
+- weighting function?
+- pairwise penalty, i.e. who's already gotten in should modify the rest of distribution (since it's drawing without replacement)
+- higher priority for allergies?
+- add a pre-activation bias, if we want to e.g. give vegetarians a higher chance for a given popup
+- formatting validation in form
 
-spring into summer and before: no guests
-make something in code to introduce this cutoff
-
-Spring into Summer,2023.04.30,picnic
-guests
-no spring into summer, pop-down
-
-Big Bang,2022.09.24,bang
-MISTI Armenia,2022.10.29,armenia
-Fall in New England,2022.11.12,fall
-Night at the Art Gallery,2022.12.03,art
-
-tea guests are sus
+## Data cleaning
 
 - More detail about what rows get dropped
   - common mistakes: mismatched number of names, emails
@@ -37,3 +25,5 @@ tea guests are sus
   - "tbd" guest, or "second is non-mit"
   - "and" instead of comma delimited, or &, or "or"
   - empty lmfao
+- can inform what we put on the form?
+- fix the errors?

@@ -45,7 +45,6 @@ Only most recent submission will count. We deduplicate entries as follows:
 - upload lottery info for the CURRENT popup: columns names, emails, notes
 - edit popups.csv with info of CURRENT popup
 - then init database, and tell it to with ID of the CURRENT popup
-- guidelines for tuning temperature
 
 ## History of all past popup attendees, and lottery info
 
@@ -57,10 +56,3 @@ Only most recent submission will count. We deduplicate entries as follows:
 - database.py will construct a database from a sliding window of the last 5 years
 - TODO: venue info?
 - no email? give a unique ID that will not be duplicated
-
-## thoughts
-
-- seniority should play a factor?
-  - class year in form
-- having the output group reflect the input distribution in terms of, how many people have gone to how many popups
-- $-n/x$ for penalty for going to popup?
