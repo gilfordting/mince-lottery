@@ -241,7 +241,7 @@ class Database:
             rows.sort(key=lambda x: x[0])
             rows.sort(key=lambda x: len(x[1]), reverse=True)
             for email, popups in rows:
-                writer.writerow([email, ",".join(popups)])
+                writer.writerow([email, ", ".join(popups)])
 
     # TODO: function for getting scores for the current popup
     # num_samples: number of entries to draw, so the number of people is in [num_samples, 2*num_samples]
@@ -277,8 +277,8 @@ class Database:
             weight = self.weighting_fn(score)
             guests_data.append(
                 {
-                    "names": ",".join([guest.name for guest in entry.guests]),
-                    "emails": ",".join([guest.email for guest in entry.guests]),
+                    "names": ", ".join([guest.name for guest in entry.guests]),
+                    "emails": ", ".join([guest.email for guest in entry.guests]),
                     "notes": entry.notes,
                     "emails_list": emails,
                     "score": score,
@@ -325,6 +325,6 @@ class Database:
                         row["score"],
                         row["weight"],
                         total_attended,
-                        ",".join(sorted(unique_popups)),
+                        ", ".join(sorted(unique_popups)),
                     ]
                 )
