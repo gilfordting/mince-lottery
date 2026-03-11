@@ -1,5 +1,13 @@
 # MINCE Lottery Algorithm
 
+HOW TO RUN:
+
+edit `lottery.py`, then run:
+
+```sh
+python lottery.py
+```
+
 ## Principles
 
 - weight should be min?max?average? of groups
