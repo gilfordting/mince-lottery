@@ -14,6 +14,7 @@
 - higher priority for allergies?
 - add a pre-activation bias, if we want to e.g. give vegetarians a higher chance for a given popup
 - formatting validation in form
+- no placeholder, tbd; this will delete your entry
 
 ## Data cleaning
 
