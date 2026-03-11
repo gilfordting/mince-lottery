@@ -1,42 +1,156 @@
+import csv
+import logging
+import os
 import re
 
-EMAIL_FORMAT = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-# Sources: https://mitadmissions.org/blogs/entry/dont-screw-up-your-username/, https://ist.mit.edu/start/kerberos
-KERB_FORMAT = re.compile(r"^[a-z0-9_]{3,8}@mit\.edu$")
+logger = logging.getLogger("lottery")
 
 
+# TODO: use MIT people API?
 def kerb_exists(kerb: str) -> bool:
-    # TODO: use MIT people API
+    """Check whether a Kerberos username exists in the MIT directory. Not yet implemented."""
     pass
 
 
+KERB_FORMAT = re.compile(r"^[a-z0-9_]{3,8}@mit\.edu$")
+
+
 def is_mit_email(email: str) -> bool:
+    """Return True if `email` matches kerb format (lowercase alphanumeric/underscore, 3-8 chars before @mit.edu). Sources: https://mitadmissions.org/blogs/entry/dont-screw-up-your-username/, https://ist.mit.edu/start/kerberos"""
     return KERB_FORMAT.match(email) is not None
 
 
+EMAIL_FORMAT = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
+
 def is_email(email: str) -> bool:
+    """Return True if `email` is a syntactically valid email address."""
     return EMAIL_FORMAT.match(email) is not None
 
 
-# Checks if email is valid.
-# If MIT email, check that in right format.
 def email_valid(email: str) -> bool:
+    """Return True if the email is valid.
+
+    MIT emails (heuristic: containing '@mit') are validated against the stricter Kerberos format; otherwise, emails are validated against a more generic email template.
+    """
     if "@mit" in email:
         return is_mit_email(email)
     return is_email(email)
 
 
-# Go through the log as follows:
-# Go popup by popup.
-# For each popup, first process lottery entries, then guests.
-# Guests get clamped to 0.
+def columns_match(filename, columns_expected):
+    """Return True if the CSV file's header exactly matches columns_expected."""
+    with open(filename, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        columns = reader.fieldnames
+        return columns == columns_expected
 
 
-# Two functions: one to run lottery (keep groups together), and one to get list of people who lotteried
+def check_lottery_sheets():
+    """Checks that the lottery sheets have the correct columns ('names', 'emails', 'notes'). Logs errors for each violation found, and warnings for extraneous files. Returns True if no errors were found, False otherwise."""
+    no_errors = True
+    lottery_dir = os.path.join("history", "lottery")
+    lottery_expected_cols = ["names", "emails", "notes"]
+    for file in os.listdir(lottery_dir):
+        if not file.endswith(".csv"):
+            logger.warning(f"Skipping non-CSV file in lottery/ folder: {file}")
+            continue
+        path = os.path.join(lottery_dir, file)
+        if not columns_match(path, lottery_expected_cols):
+            logger.error(
+                f"Lottery file `{file}` does not have the columns {lottery_expected_cols}"
+            )
+            no_errors = False
+
+    return no_errors
 
 
-def deduplicate():
-    pass
+def check_guests_sheets():
+    """Checks that the guests sheets have the correct columns ('name', 'email') and that the data inside is valid (nonempty name, valid email). Logs errors for each violation found, and warnings for extraneous files. Returns True if no errors were found, False otherwise."""
+    no_errors = True
+
+    guests_dir = os.path.join("history", "guests")
+    guests_expected_cols = ["name", "email"]
+    for file in os.listdir(guests_dir):
+        if not file.endswith(".csv"):
+            logger.warning(f"Skipping non-CSV file in guests/ folder: {file}")
+            continue
+        path = os.path.join(guests_dir, file)
+        if not columns_match(path, guests_expected_cols):
+            logger.error(
+                f"Guests file `{file}` does not have the columns {guests_expected_cols}"
+            )
+            no_errors = False
+            continue
+
+        # for guests, we also check that the data inside is valid, since we shouldn't just drop rows with invalid data like for lottery sheets
+        with open(path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for i, row in enumerate(reader, 2):
+                name = row["name"].strip()
+                email = row["email"].strip()
+                if not name:
+                    logger.error(f"{file}, row {i}: empty name")
+                    no_errors = False
+                    continue
+                if not email_valid(email):
+                    logger.error(f"{file}, row {i}: invalid email `{email}`")
+                    no_errors = False
+                    continue
+
+    return no_errors
 
 
-# TODO: statistics for like, what are the current scores for people?
+def check_metadata_sheet():
+    """Checks that the metadata sheet has the correct columns ('name', 'date', 'id') and that the data inside is valid (nonempty name, valid date, unique id). Logs errors for each violation found."""
+    popup_csv = "history/popups.csv"
+    lottery_dir = os.path.join("history", "lottery")
+    guests_dir = os.path.join("history", "guests")
+
+    if not os.path.exists(popup_csv):
+        logger.error(f"{popup_csv} not found")
+        return False
+    with open(popup_csv, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        expected_columns = ["name", "date", "id"]
+        if not columns_match(popup_csv, expected_columns):
+            logger.error(
+                f"{popup_csv} does not have the expected columns {expected_columns}"
+            )
+            return False
+
+        seen_ids = set()
+        for i, row in enumerate(reader, 2):
+            popup_id = row["id"].strip()
+            popup_name = row["name"].strip()
+            popup_date = row["date"].strip()
+
+            if not popup_name:
+                logger.error(f"{popup_csv}, row {i}: empty name")
+            if not re.match(r"^\d{4}\.\d{2}\.\d{2}$", popup_date):
+                logger.error(
+                    f"{popup_csv}, row {i}: invalid date `{popup_date}` (expected YYYY.MM.DD)"
+                )
+            if not popup_id:
+                logger.error(f"{popup_csv}, row {i}: empty id")
+            elif popup_id in seen_ids:
+                logger.error(f"{popup_csv}, row {i}: duplicate id `{popup_id}`")
+            else:
+                seen_ids.add(popup_id)
+
+            guests_file = os.path.join(guests_dir, f"{popup_id}_guests.csv")
+            lottery_file = os.path.join(lottery_dir, f"{popup_id}_lottery.csv")
+            if not os.path.exists(guests_file):
+                logger.error(f"Missing guests file: {guests_file}")
+            if not os.path.exists(lottery_file):
+                logger.error(f"Missing lottery file: {lottery_file}")
+    return True
+
+
+def check_history_folder():
+    """Validates the structure and contents of the history/ folder. See above functions for more details; details are logged as they are encountered.
+
+    If there are critical errors, the function will return False, signaling that the history/ folder must be fixed before continuing.
+    """
+    results = [check_guests_sheets(), check_lottery_sheets(), check_metadata_sheet()]
+    return all(results)

@@ -2,10 +2,9 @@
 
 ## Principles
 
-- no non-mit students
-  - members can nepo whoever they want
 - weight should be min?max?average? of groups
-- only non-nepos
+- only outputs non-nepos
+- but nepos should still be documented, in guest csv's
 
 ### Weighting function
 
@@ -26,6 +25,9 @@
 - if a single guest is then enetered in a pair again, get rid of them
 - soft ban of no repeats within the same year, but you can still accumulate lottery points
 - attending multiple popups should be weighted negatively
+Only most recent submission will count. We deduplicate entries as follows:
+- Upon receiving an entry for individual A, we remove past individual entries for A, as well as all group entries containing A.
+- Upon receiving an entry for a group, we apply the above rule for all individuals in that group.
 
 ### extra info
 
@@ -42,7 +44,7 @@
 - upload guests for the MOST RECENT popup: columns name, email
 - upload lottery info for the CURRENT popup: columns names, emails, notes
 - edit popups.csv with info of CURRENT popup
-- then init database, and tell it to  with ID of the CURRENT popup
+- then init database, and tell it to with ID of the CURRENT popup
 - guidelines for tuning temperature
 
 ## History of all past popup attendees, and lottery info
@@ -55,3 +57,10 @@
 - database.py will construct a database from a sliding window of the last 5 years
 - TODO: venue info?
 - no email? give a unique ID that will not be duplicated
+
+## thoughts
+
+- seniority should play a factor?
+  - class year in form
+- having the output group reflect the input distribution in terms of, how many people have gone to how many popups
+- $-n/x$ for penalty for going to popup?
