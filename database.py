@@ -185,7 +185,7 @@ class Database:
                 )
                 if date >= window_start and row["id"] != self.current_popup_id:
                     ids[row["id"]] = date
-        logger.info("Found popups: %s", list(ids.keys()))
+        logger.info("Found %d popups: %s", len(ids), list(ids.keys()))
         return ids
 
     def process_past_popup(self, popup_id: str, date: datetime):
@@ -221,6 +221,7 @@ class Database:
             self.process_past_popup(popup_id, date)
 
     def export_cumulative_data(self):
+        logging.info("Exporting cumulative scores to scores.csv")
         with open("scores.csv", "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["email", "score"])
@@ -231,6 +232,7 @@ class Database:
             for email, score in rows:
                 writer.writerow([email, score])
 
+        logging.info("Exporting past attendance to past_attendance.csv")
         with open("past_attendance.csv", "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["email", "attended_popups"])
@@ -244,6 +246,9 @@ class Database:
     # TODO: function for getting scores for the current popup
     # num_samples: number of entries to draw, so the number of people is in [num_samples, 2*num_samples]
     def export_lottery_results(self, num_samples: int):
+        logging.info(
+            "Exporting lottery results to lottery_results_%s.csv", self.current_popup_id
+        )
         input_file = f"history/lottery/{self.current_popup_id}_lottery.csv"
         output_file = f"lottery_results_{self.current_popup_id}.csv"
 
@@ -256,7 +261,6 @@ class Database:
         assert self.counts, "self.counts must not be empty"
 
         def group_score(emails):
-            # TODO: currently just averages the scores, change if needed
             scores = []
             for email in emails:
                 email = email.strip()

@@ -13,10 +13,10 @@ def main():
         success_penalty_fn=lambda x: x - 10,
         weighting_fn=lambda x: math.exp(x / temperature),
     )
-    if not db.data_valid:
-        return
+    assert db.data_valid, "Database validation failed"
     db.export_cumulative_data()
     db.export_lottery_results(num_samples=100)
+
 
 if __name__ == "__main__":
     main()
