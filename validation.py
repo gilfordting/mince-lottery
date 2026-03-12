@@ -12,19 +12,15 @@ def kerb_exists(kerb: str) -> bool:
     pass
 
 
-KERB_FORMAT = re.compile(r"^[a-z0-9_]{3,8}@mit\.edu$")
-
-
 def is_mit_email(email: str) -> bool:
     """Return True if `email` matches kerb format (lowercase alphanumeric/underscore, 3-8 chars before @mit.edu). Sources: https://mitadmissions.org/blogs/entry/dont-screw-up-your-username/, https://ist.mit.edu/start/kerberos"""
+    KERB_FORMAT = re.compile(r"^[a-z0-9_]{3,8}@mit\.edu$")
     return KERB_FORMAT.match(email) is not None
-
-
-EMAIL_FORMAT = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
 
 def is_email(email: str) -> bool:
     """Return True if `email` is a syntactically valid email address."""
+    EMAIL_FORMAT = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
     return EMAIL_FORMAT.match(email) is not None
 
 
