@@ -1,6 +1,7 @@
 names,emails,notes
 Michelle Chen,cshell@mit.edu,N/a
 "Gitanjali Rao, Claire Wang","clairely@mit.edu, anjalir@mit.edu",Allergic to nuts and all seafood
+"Shayda Moezzi, Namdar Nejad","Smoezzi@mit.edu, second is non-MIT",No 
 Chris Wu,chriswu@mit.edu,No
 Margaret Wang,mqwang@mit.edu,N/A
 "Fiona Lin, Michael Gilbert","fionalin@mit.edu, gilbertm@mit.edu",Nah
@@ -14,10 +15,10 @@ Yan Wu,yanswu@mit.edu,none
 "Nandini Thakur, Samay Godika","nsthakur@mit.edu, samayg@mit.edu",vegetarian
 Brindha Rathinasabapathi,brindhar@mit.edu,Vegetarian 
 "Tiffany Louie, Ryan Yang","tklouie@mit.edu, ryanyang@mit.edu",none
-Sam Salwan,ssalwan@mit.edu,Vegetarian 
+Sam Salwan,ssalwan@mit.edu,Vegetarian
 "Thomas Wu, Krystal Montgomery","wuthomas@mit.edu, mkrystal@mit.edu",none
 Julian Yocum,juliany@mit.edu,No peanuts
-"Andrew Acevedo, Vivian Guo","Alaceved@mit.edu, vivguo@mit.edu",Lactose intolerance
+"Andrew Acevedo, Vivian guo","Alaceved@mit.edu, viviianguo@mit.edu",Lactose intolerance
 "Eva Yi Xie, Rupert Li","xieyi@mit.edu, rupertli@mit.edu",No
 Ellie Bultena,ellieb@mit.edu,Vegetarian
 Katherine Zhao,kzhao02@mit.edu,No
@@ -25,7 +26,7 @@ Katherine Zhao,kzhao02@mit.edu,No
 "Fátima Hernandez, Anisha Parsan","fhernand@mit.edu, aparsan@mit.edu",None
 Sofia Lora,svlm@mit.edu,None
 "Paola Amadeo, Nebus Kitessa","pamadeo@mit.edu, nebus12@mit.edu",no pork for Nebus
-"Sameen Ahmad, Hager Gomaa","sameen_a@mit.edu, hagerg57@mit.edu",Sameen: Gluten Free; Hager: None
+"Sameen Ahmad,Hager Gomaa","sameen_a@mit.edu, hagerg57@mit.edu",Sameen: Gluten Free; Hager: None
 Ruth Lu,ruthluvu@mit.edu, 
 Chiara Palagi,cmpalagi@mit.edu, 
 "Reece Yang, Kai van Brunt","rya@mit.edu, kav@mit.edu","vegetarian, unable to have large quantity of dairy"
@@ -72,13 +73,14 @@ Thomas Warkentine,tswarken@mit.edu,
 "Casey Fienberg, Skipper Lynch","Caseyf@mit.edu, ammel@mit.edu",
 Annika Naveen,anaveen@mit.edu,
 "Grace Smith, Alice Lam","gnsmith@mit.edu, alicelam@mit.edu",
-"Priscilla Leang, Andrea Leang","pyleang@mit.edu, akleang@mit.edu",
+"Priscilla Leang, Andrea Leang","pyleang@mit.edu,akleang@mit.edu",
 "Mia Liang, Alexandra Lee","mliang51@mit.edu, alexclee@mit.edu",
 Evan Seeyave,eseeyave@mit.edu,"Peanut, fish, shellfish"
 yiming chen,yimingc@mit.edu,dairy free
 Sarah Lu,sarahlu@mit.edu,
 "Grace Jiang, Isaac Liao","gracezj@mit.edu, iliao@mit.edu",
-Mehek Gosalia,mehek@mit.edu,No red meat 
+Mehek Gosalia,mehek@mit.edu,No red meat
+"Leon Deng, Tiffany Wu",lydeng@mit.edu,
 Donato Manuel Jiménez Benetó ,donatojb@mit.edu,Gluten intolerant 
 Aleix Salvador ,Aleix123@mit.edu,Gluten intolerance 
 "June Yin, Elliot Liu","junexyin@mit.edu, balbit@mit.edu",

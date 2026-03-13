@@ -1,5 +1,5 @@
 names,emails,notes
-"Anna Chan, Amanda Cheng","annachan@mit.edu, amandach@mit.edu",anna is gluten free
+"Anna Chan, Amanda Cheng ","annachan@mit.edu,amandach@mit.edu",anna is gluten free
 Annika Marschner,annikam@mit.edu,N/A
 "Claire Lorenzo, Cassandra Parada","clorenzo@mit.edu, cparada@mit.edu",N/A
 "Lara Gomez, Emily Zhang","larag846@mit.edu, emizha@mit.edu",N/A
@@ -10,7 +10,7 @@ Maeve Chen,maevechn@mit.edu,N/A
 "Jade Buckwalter, Holden Mui","jbuckwal@mit.edu, hsmui@mit.edu",N/A
 Kathryn Le,kle@mit.edu,N/A
 Allison Anderson,alliande@mit.edu,N/A
-"Stella Shipps, Sarah Lu","Stella24@mit.edu, sarahlu@mit.edu",N/A
+"Stella Shipps, Sarah Lu","stella24@mit.edu,sarahlu@mit.edu",N/A
 Christian Fletcher,ckf@mit.edu,N/A
 "Janka Hamori, Almog Hilel","jankah@mit.edu, almogh@mit.edu",N/A
 Gracie Sheng,grac@mit.edu,N/A
@@ -91,9 +91,10 @@ Hayoon Lee,hayoonl@mit.edu,N/A
 Kayra Ilkbahar,kayrai@mit.edu,N/A
 Katrina Li,katrinal@mit.edu,N/A
 Emma Wang,emwwang@mit.edu,N/A
-"Nisha Nkya, Careen Mwenisongole","careen@mit.edu, nishabk@mit.edu",N/A
+"Nisha Nkya,Careen Mwenisongole","careen@mit.edu , nishabk@mit.edu",N/A
 "Brianna Roundtree, Daniela Alfonso Garcia","bround22@mit.edu, dalfon01@mit.edu",N/A
 "Anisha Parsan, Fatima Hernandez","aparsan@mit.edu, fhernand@mit.edu",N/A
+,,
 "Emily Neill, Marco Arias","eneill@mit.edu, maarias@mit.edu",N/A
 "Hannah Wang, Kelly Kim","hanwan@mit.edu, kyk@mit.edu",N/A
 Joy Ren,joyren@mit.edu,N/A
@@ -108,8 +109,10 @@ Melissa Li,li_me@mit.edu,N/A
 Emily Wong,emilywg@mit.edu,N/A
 Andres Buritica Monroy,andresb@mit.edu,N/A
 "Siddhu Pachipala, Zoe Yu","siddhup@mit.edu, zoeyu@mit.edu",N/A
+,,
 "Jenna Houle, Christian Duessel","jhoule@mit.edu, duesselc@mit.edu",1 Vegetarian
 Angeline Peng,pengs14@mit.edu,N/A
+,,
 Julianne Miana,jmiana@mit.edu,Pescatarian/vegetarian
 "Hannah Chung, Medha Venkatapathy ","hdchung@mit.edu, medhaven@mit.edu",N/A
 "Johan Maysonet, Renee Ge","maysonet@mit.edu, renge@mit.edu",N/A
@@ -134,23 +137,26 @@ Alexis Zhou,leqizhou@mit.edu,N/A
 Hanfei Cui,hfcui@mit.edu,N/A
 "Anna Murphy, Eve Silfanus","almurph@mit.edu, eves@mit.edu",Nut allergy
 Sunshine Jiang,sunsh16e@mit.edu,N/A
-"Alexandria Banks, Kofi Ocran","acbanks@mit.edu, keo@mit.edu",N/A
+Alexandria Banks Kofi Ocran,"acbanks@mit.edu,keo@mit.edu",N/A
 "Jennifer Lawrence, Liam Kronman","jmlaw@mit.edu, lkronman@mit.edu","treenut allergy, sesame allergy"
 Angela Wu,aywu@mit.edu,N/A
 Zimi Zhang,zimi@mit.edu,N/A
 "Ruth Lu, Basil Liu","Ruthluvu@mit.edu, byliu@mit.edu",N/A
 Oluwadara Deru,daraderu@mit.edu,N/A
 Carlos Anciano Martinez,cadaanma@mit.edu,N/A
+Alice Hall,"ahall4@mit.edu, hsono@mit.edu",N/A
 George Obongo,gobongo@mit.edu,N/A
 Ehinome Ehikhametalor,metalor@mit.edu,N/A
 Victoria Hu,vxhu@mit.edu,N/A
 "Christina Lee, Jason Chen ","hclee26@mit.edu, jasonehc@mit.edu","not an allergy, but do not eat cheese "
+,,
 Corona Chen,clcorona@mit.edu,N/A
 "Alan Wang, Vivian Ding","wangac@mit.edu, vyd@mit.edu",N/A
 "Anika Puri, Srihitha Dasari","anpuri@mit.edu, srihitha@mit.edu",Nut Allergy
 "Lizzie Yoon, Selin Adigozel","lizzie32@mit.edu, selinadi@mit.edu",N/A
-"Eugene Yoo, Sebastian Prasanna","eugeney@mit.edu, spra@mit.edu",N/A
+Eugene Yoo and Sebastian Prasanna,"eugeney@mit.edu,spra@mit.edu",N/A
 Joshua Osifo,joshosi@mit.edu,N/A
+"Chiara Palagi, Ellie Montemayor",cmpalagi@mit.edu,N/A
 "Chloe Hyun, Olivia Lee","chhyun@mit.edu, livlee@mit.edu",peanut
 "Katherine Liu, Betsy Tian","kzl@mit.edu, betsy124@mit.edu",nut allergy
 "Alison Wang, Kenta Suzuki","alisonw@mit.edu, kjsuzuki@mit.edu",N/A

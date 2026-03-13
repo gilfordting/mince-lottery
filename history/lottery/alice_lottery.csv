@@ -8,7 +8,7 @@ Shreya Reshamwala,shreyar@mit.edu,Vegetarian
 "Nate Woodward, Sarah Coston","nswood@mit.edu, scoston@mit.edu",Nut allergy
 Yan Wu,yanswu@mit.edu,No
 "Eva Yi Xie, Rupert Li","xieyi@mit.edu, rupertli@mit.edu",No
-"Kelly Wu, Claire Chen","kellywu@mit.edu, clairejc@mit.edu",Nope!
+"Kelly Wu,Claire Chen","kellywu@mit.edu, clairejc@mit.edu",Nope!
 Livia Zhang,liviasyz@mit.edu,None
 Reece Yang,rya@mit.edu,none
 Jensen Curtiss,curtiss@mit.edu,n/a
@@ -16,7 +16,7 @@ Michelle Wang,michw@mit.edu,No
 "Christian Fletcher, Andrew Zhao","ckf@mit.edu, aazhao@mit.edu",No
 "Tiffany Louie, Ryan Yang","tklouie@mit.edu, ryanyang@mit.edu",NA
 "Qingqing Ouyang, Kyla Truong","kylat777@mit.edu, qqouyang@mit.edu",no
-"Stephanie Chen, Olivia Chen","steph@mit.edu, orchen@mit.edu",N/A
+"Stephanie Chen, Olivia Chen","steph@mit.edu,orchen@mit.edu",N/A
 "Grace Sun, Cassandra Ye","gracesun@mit.edu, cassye@mit.edu",No
 "Emily Li, Kaylee Barrera","Emli@mit.edu, kaybar@mit.edu",N/a
 Jyotsna Nair,jyotsnan@mit.edu,No beef
@@ -24,12 +24,13 @@ Jyotsna Nair,jyotsnan@mit.edu,No beef
 Katherine Zhao,kzhao02@mit.edu,No
 Alexis MacAvoy,amacavoy@mit.edu,None
 "Leala Nakagawa, Dominique Dang","lealan@mit.edu, ddang@mit.edu",N/A
-"Jessica Nguyen, Olivia Orlik","jxhn@mit.edu, oorlik@mit.edu",n/a
+"Jessica Nguyen, Olivia Orlik","jxhn@mit.edu,  oorlik@mit.edu",n/a
 Thomas Warkentine,tswarken@mit.edu,No
 "Anish Mudide, Remington Kim","amudide@mit.edu, remikim@mit.edu",None
 "Michelle Touma, Anika Huang","mtouma@mit.edu, kn6oqk@mit.edu",No for me (pecans and walnuts for Anika)
 Tamara Hinderman ,tnh8210@mit.edu,N/A
 Annabel Adeyeri,anade22@mit.edu,NA
+"Jenny Moralejo, Nathaniel Sandalow-Ash",moralejo@mit.edu,N/A
 Michelle Chen,cshell@mit.edu,none
 "Tamara Hinderman, Jorian Benke","tnh8210@mit.edu, jbenke@mit.edu",N/A
 "Sophia Shi, Krystal Montgomery","sophia_s@mit.edu, mkrystal@mit.edu",none
@@ -62,7 +63,7 @@ Chiara Palagi,cmpalagi@mit.edu,n/a
 Kiera Reed,kiera@mit.edu,none
 Donato Jiménez ,donatojb@mit.edu,Gluten intolerant 
 "Lawrence Liu, Krithik Ramesh","lwl@mit.edu, krithik@mit.edu",Nah
-"Casey Fienberg, Skipper Lynch ","Caseyf@mit.edu, ammel@mit.edu",None 
+"Casey Fienberg, Skipper Lynch ","caseyf@mit.edu, ammel@mit.edu",None
 Julian Yocum,juliany@mit.edu,allergic to peanuts
 "Gwyneth Liu, Joey Dong","gwyliu@mit.edu, joey91@mit.edu",No
 "Valeria Gutierrez, Kaitlin Lim","valmg@mit.edu, kaitlim@mit.edu",no
@@ -91,11 +92,11 @@ Pris Wasuwanich ,priswasu@mit.edu,N/A
 "Vivian Trinh, Michelle Chan","viviantt@mit.edu, mishchan@mit.edu",no
 "Emilio Ahuactzin, Daniel Villagran","eahuactz@mit.edu, danielvi@mit.edu",Onion allergies for Daniel
 Giuliana Pertuz,gpertuz@mit.edu,n/a
-"Amber Velez, Gosha Geogdzhayev","avelez9@mit.edu, mgeo@mit.edu",nar
+"Amber Velez,Gosha Geogdzhayev","avelez9@mit.edu, mgeo@mit.edu",nar
 Yazan Almajnouni,yazana@mit.edu,no
 "Jenny Yu, Katherine Li","yujenny@mit.edu, katwli@mit.edu",N/A
-"Alonso Hernandez, Cat Hoppman","pahernan@mit.edu, catdh@mit.edu","MSG allergy, lactose intolerance"
-"Ishita Bhimavarapu, Janet Qian","ishitab@mit.edu, janetq@mit.edu",no
+"Alonso Hernandez, Cat Hoppman","pahernan@mit.edu,catdh@mit.edu","MSG allergy, lactose intolerance"
+"Ishita Bhimavarapu, Janet Qian","ishitab@mit.edu,janetq@mit.edu",no
 Tanusri Mandapati,tsm255@mit.edu,N/A
 "Divij Lankalapalli, Jennifer Lawrence","divij@mit.edu, jmlaw@mit.edu",Tree nuts
 Eeshan Tripathii,eeshan@mit.edu,Cannot eat beef or pork 
