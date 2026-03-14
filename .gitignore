@@ -2,3 +2,7 @@ lottery_results_*.csv
 past_attendance.csv
 scores.csv
 .db_cache.pkl
+# Allow Claude commands -- don't ignore .claude/ but only look at .claude/commands/
+!.claude/
+.claude/*
+!.claude/commands/
