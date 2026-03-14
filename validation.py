@@ -1,37 +1,11 @@
 import csv
-import logging
 import os
+import logging
 import re
+from email_validation import EmailType, email_validation_batch
+
 
 logger = logging.getLogger("lottery")
-
-
-# TODO: use MIT people API?
-def kerb_exists(kerb: str) -> bool:
-    """Check whether a Kerberos username exists in the MIT directory. Not yet implemented."""
-    pass
-
-
-def is_mit_email(email: str) -> bool:
-    """Return True if `email` matches kerb format (lowercase alphanumeric/underscore, 3-8 chars before @mit.edu). Sources: https://mitadmissions.org/blogs/entry/dont-screw-up-your-username/, https://ist.mit.edu/start/kerberos"""
-    KERB_FORMAT = re.compile(r"^[a-z0-9_]{3,8}@mit\.edu$")
-    return KERB_FORMAT.match(email) is not None
-
-
-def is_email(email: str) -> bool:
-    """Return True if `email` is a syntactically valid email address."""
-    EMAIL_FORMAT = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-    return EMAIL_FORMAT.match(email) is not None
-
-
-def email_valid(email: str) -> bool:
-    """Return True if the email is valid.
-
-    MIT emails (heuristic: containing '@mit') are validated against the stricter Kerberos format; otherwise, emails are validated against a more generic email template.
-    """
-    if "@mit" in email:
-        return is_mit_email(email)
-    return is_email(email)
 
 
 def columns_match(filename, columns_expected):
@@ -82,14 +56,18 @@ def check_guests_sheets():
         # for guests, we also check that the data inside is valid, since we shouldn't just drop rows with invalid data like for lottery sheets
         with open(path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            for i, row in enumerate(reader, 2):
-                name = row["name"].strip()
-                email = row["email"].strip()
+            names = [row["name"].strip() for row in reader]
+            emails = [row["email"].strip() for row in reader]
+            email_types = email_validation_batch(emails)
+
+            for i, (name, email, email_type) in enumerate(
+                zip(names, emails, email_types), 2
+            ):
                 if not name:
                     logger.error(f"{file}, row {i}: empty name")
                     no_errors = False
                     continue
-                if not email_valid(email):
+                if email_type == EmailType.INVALID:
                     logger.error(f"{file}, row {i}: invalid email `{email}`")
                     no_errors = False
                     continue

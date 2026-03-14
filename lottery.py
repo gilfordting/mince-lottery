@@ -7,7 +7,19 @@ from database import Database
 import logging
 import math
 
-logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+DATA = 15  # Between DEBUG (10) and INFO (20)
+logging.addLevelName(DATA, "DATA")
+
+
+def data(self, message, *args, **kwargs):
+    if self.isEnabledFor(DATA):
+        self._log(DATA, message, args, **kwargs)
+
+
+logging.Logger.data = data
+
+# logging.basicConfig(level=logging.DEBUG, format="[%(levelname)s] %(message)s")
+logging.basicConfig(level=DATA, format="[%(levelname)s] %(message)s")
 
 def main():
     temperature = 1

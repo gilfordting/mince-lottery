@@ -8,7 +8,8 @@ from enum import Enum, auto
 
 import numpy as np
 
-from validation import check_history_folder, email_valid
+from validation import check_history_folder, email_validation_batch, EmailType
+
 
 logger = logging.getLogger("lottery")
 
@@ -18,6 +19,7 @@ logger = logging.getLogger("lottery")
 class Guest:
     name: str
     email: str
+    email_type: EmailType
 
 
 @dataclass(frozen=True)
@@ -26,10 +28,16 @@ class Entry:
     notes: str
 
 
-def make_entry(names: list[str], emails: list[str], notes: str) -> Entry:
+def make_entry(
+    names: list[str], emails: list[str], email_types: list[EmailType], notes: str
+) -> Entry:
     assert len(names) == len(emails)
+    assert len(names) == len(email_types)
     return Entry(
-        guests=tuple(Guest(name, email) for name, email in zip(names, emails)),
+        guests=tuple(
+            Guest(name, email, email_type)
+            for name, email, email_type in zip(names, emails, email_types)
+        ),
         notes=notes,
     )
 
@@ -37,7 +45,7 @@ def make_entry(names: list[str], emails: list[str], notes: str) -> Entry:
 # Turns list of individual guests and groups --> list of individual guests only, flattening groups. We should have no duplicates in this list.
 def flatten_entries(entries: list[Entry]) -> list[Guest]:
     entries_flat = sum([list(entry.guests) for entry in entries], start=[])
-    emails_flat = [entry.email for entry in entries_flat]
+    emails_flat = [guest.email for guest in entries_flat]
     assert len(emails_flat) == len(set(emails_flat)), (
         "Duplicate emails found in flattened entries"
     )
@@ -53,29 +61,48 @@ class DropReason(Enum):
 
 # Process a single row of a lottery entry spreadsheet.
 # Returns None if row has *any* invalid data.
-def process_row(names: str, emails: str, notes="") -> tuple[Entry | None, DropReason]:
-    names = [name.strip() for name in names.split(",")]
-    emails = [email.lower().strip() for email in emails.split(",")]
+def process_row(
+    names: list[str], emails: list[str], email_types: list[EmailType], notes=""
+) -> tuple[Entry | None, DropReason]:
     # Mismatched number of names/emails -- throw out
     if len(names) != len(emails):
         return None, DropReason.MISMATCHED_COUNTS
     # Any email in the group invalid? -- throw out
-    if any(not email_valid(email) for email in emails):
+    if any(email_type == EmailType.INVALID for email_type in email_types):
         return None, DropReason.INVALID_EMAIL
     # Duplicate emails within the same entry -- throw out
     if len(set(emails)) != len(emails):
         return None, DropReason.DUPLICATE_EMAILS
-    return make_entry(names, emails, notes), DropReason.NO_DROP
+    return make_entry(names, emails, email_types, notes), DropReason.NO_DROP
 
 
 # Turns guest spreadsheet from a past popup into list of Guests.
 def get_guests(rows: list[tuple[str, str]]) -> list[Guest]:
     entries = []
-    for row in rows:
-        names, emails = row
-        entry, _ = process_row(names, emails)
-        assert entry is not None, f"Invalid guest row: {names}, {emails}"
-        assert len(entry.guests) == 1, f"Expected single guest, got {len(entry.guests)}"
+    # for each row, get all the names and emails
+    names_list: list[list[str]] = [
+        [s.strip() for s in row[0].split(",")] for row in rows
+    ]
+    emails_list: list[list[str]] = [
+        [s.strip() for s in row[1].split(",")] for row in rows
+    ]
+    all_emails = [email for sublist in emails_list for email in sublist]
+    # feed in all emails as flattened list; it will be cached, and then we can just query again for individual rows
+    _ = email_validation_batch(all_emails)
+    for i, (names, emails) in enumerate(zip(names_list, emails_list), 2):
+        email_types = email_validation_batch(emails)
+        entry, _ = process_row(
+            names,
+            emails,
+            email_types,
+        )
+        # assert entry is not None, f"Invalid guest in row {i}: {names}, {emails}"
+        if entry is None:
+            logger.data(f"Invalid guest in row {i}: {names}, {emails}")
+            continue
+        assert len(entry.guests) == 1, (
+            f"Expected one guest in row {i}, got {len(entry.guests)}"
+        )
         entries.append(entry.guests[0])
     return entries
 
@@ -108,9 +135,23 @@ def get_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
 
         entries.add(entry)
 
-    for row_num, row in enumerate(rows):
-        names, emails, notes = row
-        entry, drop_reason = process_row(names, emails, notes)
+    # for each row, get all the names and emails
+    names_list: list[list[str]] = [
+        [s.strip() for s in row[0].split(",")] for row in rows
+    ]
+    emails_list: list[list[str]] = [
+        [s.strip() for s in row[1].split(",")] for row in rows
+    ]
+    notes_list: list[str] = [row[2].strip() for row in rows]
+    all_emails = [email for sublist in emails_list for email in sublist]
+    # feed in all emails as flattened list; it will be cached, and then we can just query again for individual rows
+    _ = email_validation_batch(all_emails)
+
+    for i, (names, emails, notes) in enumerate(
+        zip(names_list, emails_list, notes_list), 2
+    ):
+        email_types = email_validation_batch(emails)
+        entry, drop_reason = process_row(names, emails, email_types, notes)
         if entry is None:
             match drop_reason:
                 case DropReason.DUPLICATE_EMAILS:
@@ -118,12 +159,12 @@ def get_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
                 case DropReason.INVALID_EMAIL:
                     msg = f"invalid email in {emails}"
                 case DropReason.MISMATCHED_COUNTS:
-                    msg = f"mismatched counts for names: {names}, emails: {emails}"
+                    msg = f"mismatched counts between names: {names}, emails: {emails}"
                 case DropReason.NO_DROP:
                     assert False, "Drop reason should be provided"
                 case _:
                     msg = f"unknown drop reason: {drop_reason}"
-            logger.debug(f"Dropping row {row_num + 2}; {msg}")
+            logger.data(f"Dropping row {i}; {msg}")
             continue
         add_entry(entry)
 
@@ -150,7 +191,7 @@ class Database:
         self.attended: dict[str, list[str]] = defaultdict(list)
         self.data_valid = check_history_folder()
         if not self.data_valid:
-            logging.error(
+            logger.error(
                 "History folder validation failed. Please fix the errors and try again."
             )
             return
@@ -194,9 +235,7 @@ class Database:
             f"history/lottery/{popup_id}_lottery.csv", newline="", encoding="utf-8"
         ) as csvfile:
             rows = list(csv.DictReader(csvfile))
-            logging.debug(
-                f"Processing {len(rows)} lottery entries for popup {popup_id}"
-            )
+            logger.data(f"Processing {len(rows)} lottery entries for popup {popup_id}")
             entries = get_entries(
                 [(row["names"], row["emails"], row["notes"]) for row in rows]
             )
@@ -221,7 +260,7 @@ class Database:
             self.process_past_popup(popup_id, date)
 
     def export_cumulative_data(self):
-        logging.info("Exporting cumulative scores to `scores.csv`")
+        logger.info("Exporting cumulative scores to `scores.csv`")
         with open("scores.csv", "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["email", "score"])
@@ -232,7 +271,7 @@ class Database:
             for email, score in rows:
                 writer.writerow([email, score])
 
-        logging.info("Exporting past attendance to `past_attendance.csv`")
+        logger.info("Exporting past attendance to `past_attendance.csv`")
         with open("past_attendance.csv", "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["email", "attended_popups"])
@@ -245,7 +284,7 @@ class Database:
 
     # num_samples: number of entries to draw, so the number of people is in [num_samples, 2*num_samples]
     def export_lottery_results(self, num_samples: int):
-        logging.info(
+        logger.info(
             "Exporting lottery results to `lottery_results_%s.csv`",
             self.current_popup_id,
         )
