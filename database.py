@@ -177,6 +177,9 @@ def get_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
         email_types = email_validation_batch(emails)
         entry, drop_reason = process_row(names, emails, email_types, notes)
         if entry is None:
+            assert drop_reason != DropReason.NO_DROP, (
+                "Drop reason should be provided if None is returned"
+            )
             match drop_reason:
                 case DropReason.DUPLICATE_EMAILS:
                     msg = f"duplicate emails {emails}"
@@ -184,10 +187,9 @@ def get_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
                     msg = f"invalid email in {emails}"
                 case DropReason.MISMATCHED_COUNTS:
                     msg = f"mismatched counts between names: {names}, emails: {emails}"
-                case DropReason.NO_DROP:
-                    assert False, "Drop reason should be provided"
                 case _:
-                    msg = f"unknown drop reason: {drop_reason}"
+                    # Will catch errors if we add new affiliation types
+                    assert False, "Unhandled drop reason"
             logger.data(f"Dropping row {i}; {msg}")
             continue
         add_entry(entry)

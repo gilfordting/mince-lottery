@@ -148,6 +148,7 @@ def email_validation_batch(emails: list[str]) -> list[EmailType]:
                 # TODO adjust based on what we want
                 return EmailType.NON_MIT
             case _:
+                # Will catch errors if we add new affiliation types
                 assert False, "Unhandled affiliation"
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
