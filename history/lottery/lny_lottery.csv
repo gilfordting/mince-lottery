@@ -1,5 +1,5 @@
 names,emails,notes
-"Fatima Hernandez, Anisha Parsan","aparsan@mit.edu, fhernand@mit.edu",
+"Fatima Hernandez, Anisha Parsan","aparsan, fhernand",
 "Levi Gershon, Aaron Becker","lgershon@mit.edu, ambecker@mit.edu","Pescatarian no shelfish for Levi, none for Aaron"
 "Michael Zhang, Sam Chen","mmz@mit.edu, samchen@mit.edu","Walnut, Hazelnut, Shrimp"
 Emily Zhou,emilyz26@mit.edu,
@@ -14,7 +14,7 @@ Etash Bhat,Ebhat@mit.edu,
 Mahmoud Abdelmoneum,mabdel03@mit.edu,No pork
 "Jessica Xu, Sarah Wang","jjx@mit.edu, sarahyw@mit.edu",
 Yan Wu,yanswu@mit.edu,
-"Amber Velez, gosha geogzdhayev","avelez9@mit.edu, mgeo@mit.edu",
+"Amber Velez, gosha geogzdhayev","Avelez9, mgeo",
 "Timber Carey, Miguel Talamantez","timberc@mit.edu, mtala@mit.edu",
 "Lana Xu, Ray Wang","ylanaxu@mit.edu, raywang4@mit.edu",
 "Stephen Hong, Shayla Nguyen","sshong@mit.edu, shaylatn@mit.edu",
@@ -34,7 +34,7 @@ Catherine Tang,cattang@mit.edu,N/A
 Kimberly Liao,kimliao@mit.edu,
 Sofia Lora,svlm@mit.edu,
 Willow Huang,whuang03@mit.edu,
-"Rumi Lee, Audrey Lorvo","rumilee@mit.edu,ajmlorvo@mit.edu",
+Rumi Lee and Audrey Lorvo,rumilee@mit.edu and ajmlorvo@mit.edu,
 Charlotte Myers,c_myers@mit.edu,vegetarian
 Ian Rosado,ikrosado@mit.edu,
 "Kat Dou, Renee Hong","katdou@mit.edu, renee12@mit.edu",n/a
@@ -60,8 +60,9 @@ Megan Tian,megant@mit.edu,
 Evan Seeyave,eseeyave@mit.edu,Peanut allergy
 "Denise Tellbach, David Chang","Tellbach@mit.edu, dbc117@mit.edu",
 "Vicky Chen, Ozzie Martinez","vrchen@mit.edu, ozziem@mit.edu",
-"María José Guerrero, Hernando Ardila","majo_gg@mit.edu, ardilah@mit.edu",
+María José Guerrero ,"majo_gg@mit.edu, ardilah@mit.edu",
 "Daniel Villagran, Emilio Ahuactzin-Garcia ","danielvi@mit.edu, eahuactz@mit.edu",Just onion sensitivity (ok if it’s a small amount)
+"Ellie Pinto, Amelia Zheng","epinto@mit.edu, non-mit guest",
 Vivian Hir,vshir@mit.edu,
 "Khushi Parikh, Denis Siminiuc","simdenis@mit.edu, khushi25@mit.edu",1 Vegetarian 
 Livia Zhang,Liviasyz@mit.edu,
@@ -76,9 +77,9 @@ Saketh Gabbita,sgabbita@mit.edu,
 "Aimee Wang, Helen Hu","aimeew@mit.edu, helhu@mit.edu",
 "Annie Wang, Elizabeth Ke","annewang@mit.edu, elizke@mit.edu",
 "Jackson Zhang, Vittal Thirumalai","jacksonz@mit.edu, vittalt@mit.edu",n/a
-"Ashley Ke, Grace Pu","ashleyke@mit.edu, gracepu@mit.edu",
+"Ashley Ke, Grace Pu","ashleyke, gracepu",
 "Eugenia Feng, Jinger Chong","eyf@mit.edu, jinger@mit.edu",
-"Jenny Moralejo, Nathaniel Sandalow-Ash","moralejo@mit.edu, therealtaylorswift@mit.edu",
+"Jenny Moralejo, Nathaniel Sandalow-Ash",moralejo,
 "Jenny Yu, Stephanie Chen","yujenny@mit.edu, steph@mit.edu",
 "Keira Mooney, Angel Patricio","kamooney@mit.edu, aopatric@mit.edu",
 Lucy Cai,jcai1@mit.edu,
@@ -94,12 +95,13 @@ Penny Tan,zipeitan@mit.edu,
 "Grace Tian, Zhening Li","gytian@mit.edu, zli11010@mit.edu",
 "Liane Xu, Sophia Wang","lianexu@mit.edu, sophiasw@mit.edu",
 "Jessica Wang, Isabel Sperandio","jessw@mit.edu, isabelsp@mit.edu",
-"Alison Wang, Allison Lin","alisonw@mit.edu, alin45@mit.edu",
+"Alison Wang, Allison Lin","alisonw, alin45",
 Selena Liu,selenal@mit.edu,No cheese? :')
 "Justin Shan, Eric Hong","justshan@mit.edu, ehong@mit.edu",
 Leon Fan,leonfan@mit.edu,
 Justin Le,jple@mit.edu,
-"Sharona Huang, Anna Kim","sharonah@mit.edu, akim05@mit.edu",
+"Sharona Huang, Anna Kim",sharonah@mit.edu,
+"Malina Desai, Tristan Lee",mmdesai@mit.edu,vegetarian
 Nicholas Ouyang,nyouyang@mit.edu,
 "Xuan Ly, Cindy Tran","Ltx@mit.edu, cindyt@mit.edu",
 Jagdeep Bhatia,jagdeep@mit.edu,cannot eat halal
@@ -112,10 +114,10 @@ Elaine Jiang,ejiang@mit.edu,
 "Derrick Liang, Leon Fan","derrick8@mit.edu, leonfan@mit.edu",Peanut
 Lucia Wang,luciajw@mit.edu,
 "Amanda Hulver, Sasha Krigel","ahulver@mit.edu, skrigel@mit.edu",
-"Rachel Mohammed, Susan Hong","r_moham@mit.edu, suahong@mit.edu",
+"Rachel Mohammed, Susan Hong",suahong@mit.edu,
 "Alex Brennan, Dana Bell","sabren@mit.edu, dbell25@mit.edu",
-Mehek Gosalia,mehek@mit.edu,No red meat (no beef no pork)
-"Rafaa Qanash, Lara Monagel","rafaa@mit.edu, laram@mit.edu",we both don’t eat pork
+Mehek Gosalia,mehek,No red meat (no beef no pork)
+Rafaa Qanash,"rafaa@mit.edu, laram@mit.edu",we both don’t eat pork
 "Zhixing Chen, Erin Liu","zhixingc@mit.edu, erinliu@mit.edu",
 Ashley Lu,ashlu1@mit.edu,Nuts
 Nicole Shen,nic0les@mit.edu,

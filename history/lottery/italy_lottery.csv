@@ -2,21 +2,23 @@ names,emails,notes
 Shreya Reshamwala,shreyar@mit.edu,Vegetarian
 Ana Vadillo,anavad@mit.edu,
 "Shayla Nguyen, Stephen Hong","shaylatn@mit.edu, sshong@mit.edu",
+"Rafaa Qanash, Sarah Alhudaithy",rafaa@mit.edu,
 "Nidhi Mathihalli, Mary Tang","nidhim27@mit.edu, mwtang@mit.edu",
 "Mingpei Li, Thomas Warkentine","mungbean@mit.edu, tswarken@mit.edu",
 "Tina Zhang, Rachel Nguyen","zhangtin@mit.edu, rknguyen@mit.edu",Shellfish
 "Emily Zhou, Michael Peng","emilyz26@mit.edu, mpeng19@mit.edu",
+"Khiem Nguyen, Linh Trang",nhkhiem@mit.edu,None
 "Melissa Stok, Eliza Bazakas","mstok@mit.edu, ebazakas@mit.edu",Vegetarian
 Saketh Gabbita,sgabbita@mit.edu,
 Manaal Mohammed,manaal@mit.edu,halal
-"Isabella Gandara, Matthew Warner","igandara@mit.edu, mwarner@mit.edu",
+"Isabella Gandara, Matthew Warner",igandara@mit.edu,
 "Grace Sun, Sruthi Kalavacherla","gracesun@mit.edu, sruthik@mit.edu",
 "Daisy Wang, Nithin Parsan","dais@mit.edu, nparsan@mit.edu",
 "Janka Hamori, Almog Hilel","jankah@mit.edu, almogh@mit.edu",
-Sagnik Anupam,sanupam@mit.edu,
+Sagnik Anupam,sanupam,
 Ebby Brennan,brennane@mit.edu,no red meat (pork + beef)
 "Olivia Tang, Caroline Liu","via@mit.edu, caroliu@mit.edu",
-Margaret Zheng,mzheng01@mit.edu,
+Margaret Zheng,mzheng01,
 Ria Kolli,rkolli@mit.edu,No pork or beef; kiwi allergy
 "Tanusri Mandapati, Jennifer Lawrence","tsm255@mit.edu, jmlaw@mit.edu",tree nut allergy
 Catherine Tang ,cattang@mit.edu,None 
@@ -27,7 +29,7 @@ Anh Nguyen,anhn@mit.edu,
 Ivy Liu,iliu@mit.edu,Avocado; cantalope
 Anushree Chaudhuri,anuc@mit.edu,Pescatarian
 Eren Shin,erenshin@mit.edu,
-"Nader Jemel, Angelos Assos","naderj@mit.edu, assos@mit.edu",
+"Nader Jemel, Angelos Assos","naderj, assos",
 Gabriel Rodríguez Castillo,rgabriel@mit.edu,
 Alexis MacAvoy,amacavoy@mit.edu,
 "Hannah Chung, Justin Hong","hdchung@mit.edu, namyang@mit.edu",
@@ -35,7 +37,7 @@ Alexis MacAvoy,amacavoy@mit.edu,
 "Renee Ge, Johan Maysonet","renge@mit.edu, maysonet@mit.edu",
 "Jessica Lam, Audrey Chen","jeslam@mit.edu, auds@mit.edu",walnuts 
 "Michelle Cao, Eliska Liang","mycao@mit.edu, eyliang@mit.edu",
-Kien Phuong,kien2410@mit.edu,
+Kien Phuong,kien2410,
 "Amber Cooper, Nicholas Abate","amcooper@mit.edu, nabate@mit.edu",Pineapple allergy
 "George Bian, Zak Zhang","gbian@mit.edu, zakzhang@mit.edu",All nuts allergy
 Thao Do,txdo@mit.edu,
@@ -51,7 +53,7 @@ Preston Hess,rphess@mit.edu,
 "Natalie Tang, Annika Naveen","nattang@mit.edu, anaveen@mit.edu",
 "Sydney Saenz, Jonatan Hernandez-Mijangos","saenz728@mit.edu, aevum@mit.edu",
 Lilian Zhu,lili_zhu@mit.edu,
-"Casey Fienberg, Skipper lynch","caseyf@mit.edu, ammel@mit.edu",
+"Casey Fienberg, Skipper lynch","Caseyf, Ammel",
 "Claire Lu, Benjamin Rich","luclaire@mit.edu, brrich@mit.edu",
 "Maria José Guerrero, Hernando Ardila ","majo_gg@mit.edu, ardilah@mit.edu",
 "Audrey Lim, Janet Guo","audr3y@mit.edu, janetguo@mit.edu",Severe peanut allergy
@@ -97,13 +99,15 @@ Esha Bhatia,ebhatia@mit.edu,Vegetarian
 "Maggie Liu, Roshni Parulekar-Martins","magpie@mit.edu, roshnipm@mit.edu",vegetarian and nut allergy
 "Annie Wang, Elizabeth Ke","annewang@mit.edu, elizke@mit.edi",
 "Helen Hu, Eileen Li","helhu@mit.edu, eqli@mit.edu",
+"Kasra Mazaheri, Shannon Harper",mazaheri@mit.edu,
 "Sean Li, Angela Zhao","seanjli@mit.edu, amzhao@mit.edu",
 Selena Liu,selenal@mit.edu,
 Kai Xi,xkai@mit.edu,
 "Jasmine Chen, Kayla Suarez","chenjas@mit.edu, ksuarez@mit.edu",
-"Alicia Ouyang, David Wong","aliciao@mit.edu, dyhwong@mit.edu",
+"Alicia Ouyang, David Wong","aliciao, dyhwong",
 Stephanie Han,hanstep@mit.edu,
 "Jade Durham, Joshika Chakraverty","jdurham@mit.edu, joshika@mit.edu",no pork or beef (Joshika)
+"Ellie Pinto, Tbd",epinto@mit.edu,
 "Keira Mooney, Angel Patricio","kmooney@mit.edu, aopatric@mit.edu",
 Kennedy Gore,kgore@mit.edu,
 "Katherine Mohr, Nicole Stiles","kmohr@mit.edu, nstiles@mit.edu",vegetarian
@@ -127,10 +131,11 @@ Rudiba Laiba,Rudiba@mit.edu,Zabiha Halal
 Alyssa Solomon,solam@mit.edu,
 "Asher Wong, Maxwell Jiang","wongn@mit.edu, mdjiang@mit.edu",Low glucose (low carb) preferred for Maxwell.
 "Ruth Lu, Basil Liu","Ruthluvu@mit.edu, Byliu@mit.edu",
-"Vivian Guo, Andrew Acevedo","vivguo@mit.edu, alaceved@mit.edu",
+"Vivian Guo, Andrew Acevedo","vivguo@mit.edu, alaceved",
 "Sophia Zheng, Peihua Huang","sjzheng@mit.edu, peihua@mit.edu",
 "An Dinh, Katherine Xie","anmdinh@mit.edu, kxie22@mit.edu",
 Anish Ravichandran,anishrav@mit.edu,Vegetarian (eggs and dairy are fine)
+"Chatchanun Suriyaammaranon, Chatchanun Suriyaammaranon","chatchan@mit.edu, Rawisara Lohanimit",
 "Thomas Wu, Krystal Montgomery","wuthomas@mit.edu, mkrystal@mit.edu",
 Alexandra Nwigwe,acnwigwe@mit.edu,
 Layla Stanton,layla99@mit.edu,
@@ -151,26 +156,29 @@ Veronica Patino,vcapatino@mit.edu,
 "Timmy Dang, Patrick Liu","timmyd@mit.edu, pxliu@mit.edu",
 "Henry Heiberger, Harry Heiberger","henryrh@mit.edu, harryh@mit.edu",
 Ella Kazazic,ekaz@mit.edu,
+"Shruti Garg, Chloe Loughridge",sgrg@mit.edu,Vegetarian!
 Annie Feng,azf@mit.edu,
 Ryan Yang,yry@mit.edu,
 "Camila Moran-Hidalgo, Monica Petulla ","cmohi@mit.edu, map1147@mit.edu",
 "Lingyi Qiu, Nina Li","lingyi@mit.edu, ninaliyh@mit.edu",
-"Ashley Ke, Sabrina Liu","ashleyke@mit.edu, sabrliu@mit.edu",
+"Ashley Ke, Sabrina Liu","ashleyke, sabrliu",
 "LeAnn Tai, Hannah Tao","leanntai@mit.edu, htao@mit.edu",
 "Andrew Huang, Neha Pant","ahhh@mit.edu, nehapant@mit.edu",
 "Sophia Lee, Erika Pilpre","sjhlee@mit.edu, erikap@mit.edu",
 "Christian Cassamajor-Paul, Theo Gerst","chrisscp@mit.edu, the0@mit.edu",
+"Yongao Hu, Ricardo Quintana-Vallejo",yongao@mit.edu,
 "Sophie Fan, Claudius Tewari","sophi120@mit.edu, cttewari@mit.edu",
 YC Li,yuecli@mit.edu,Shellfish allergy
 "Elisabeth Bullock, Lani Lee","edb22@mit.edu, lanilee@mit.edu",kiwi
 Amari Rebolledo-Ledesma,antorebo@mit.edu,
 "Isaac Liao, Grace Jiang","iliao@mit.edu, gracezj@mit.edu",peanut
+"Delphine Protopapas, Leela Elliott",dtproto@mit.edu,
 Mehek Gosalia,mehek@mit.edu,Don’t eat red meat
 Emily Cheng,emilych@mit.edu,
 "Hannah Wang, Kelly kim","Hanwan@mit.edu, Kyk@mit.edu",
 Katherine Panebianco,kpanebia@mit.edu,
 "Alina Yang, Archita Khaire","alinay@mit.edu, khaire21@mit.edu",
-"Megan Tian, Janelle Cai","megant@mit.edu,jcai18@mit.edu",
+"Megan Tian, Janelle Cai","megant@mit.edu, jcai18",
 "Janelle Cai, Megan Tian","jcai18@mit.edu, megant@mit.edu",
 "Allie Chinchar, Dana Lerum","chinchar@mit.edu, dgl@mit.edu",
 "Joyce Yuan, Sean Chen","jyuan24@mit.edu, sncn@mit.edu",
@@ -187,18 +195,18 @@ Abigail Schipper,abbies@mit.edu,
 "Hannah Wang, Lara Bernard","Hanwan@mit.edu, Larab@mit.edu",
 Archita Khaire,khaire21@mit.edu,NA
 Elisa Xia,elisaxia@mit.edu,
-"Shreya Ravikumar, Anna Yang","shreyark@mit.edu, ajyang@mit.edu",Vegetarian except for chicken for Shreya
+"Shreya Ravikumar, Anna Yang",ajyang@mit.edu,Vegetarian except for chicken for Shreya
 "Isabella Vesely, Lily Sun","ivesely@mit.edu, xqsun@mit.edu",
 "Sarah Pomerantz, Carla Duong","svpom@mit.edu, cduong@mit.edu",
 "Kai Van Brunt, Reece Yang","kav@mit.edu, rya@mit.edu",Kai is vegetarian
 Alexis Yi,alexisy@mit.edu,pescatarian
 "Claire Lorenzo, Cassandra Parada","clorenzo@mit.edu, cparada@mit.edu",
-"anna kim, sharona huang","akim05@mit.edu,sharona@mit.edu",
+"anna kim, sharona huang","akim05@mit.edu, sharona",
 "Addie Parker, Sam Packman ","sampack@mit.edu, Apark@mit.edu",
 Margaret Wang,mqwang@mit.edu,
 "Julie Meng, Arun Wongprommoon","jlmeng@mit.edu, arunwpm@mit.edu",
 "Renee Ge, Johan Maysonet","renge@mit.edu, maysonet@mit.edu",
-"Yuka Machino, Andrii Zahorodnii","yukam997@mit.edu, zaho@mit.edu",
+Yuka Machino,"yukam997@Mit.edu, zaho@mit.edu",
 "Alicia Lin, Lillian Wang","ayl27@mit.edu, lw0328@mit.edu",
 Haani Mahmood,haani@mit.edu,halal/vegetable
 "Dat Tran, Runhundaka Ejilemele","datt@mit.edu, ruejilem@mit.edu",
