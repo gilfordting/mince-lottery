@@ -119,11 +119,11 @@ def is_email(email: str) -> bool:
 
 
 class EmailType(Enum):
-    STUDENT = auto()  # current MIT student
-    STAFF = auto()  # MIT staff
-    AFFILIATE = auto()  # previously affiliated, probably alum
-    NON_MIT = auto()  # valid email, but not MIT-affiliated
-    INVALID = auto()  # invalid email (typo or otherwise malformed)
+    STUDENT = "student"  # current MIT student
+    STAFF = "staff"  # MIT staff
+    AFFILIATE = "affiliate"  # previously affiliated, probably alum
+    NON_MIT = "non_mit"  # valid email, but not MIT-affiliated
+    INVALID = "invalid"  # invalid email (typo or otherwise malformed)
 
 
 def email_validation_batch(emails: list[str]) -> list[EmailType]:
@@ -150,5 +150,5 @@ def email_validation_batch(emails: list[str]) -> list[EmailType]:
             case _:
                 assert False, "Unhandled affiliation"
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         return list(executor.map(email_validation, emails))
