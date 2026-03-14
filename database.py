@@ -1,5 +1,9 @@
 import csv
+import hashlib
 import logging
+import marshal
+import os
+import pickle
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -12,6 +16,26 @@ from validation import check_history_folder, email_validation_batch, EmailType
 
 
 logger = logging.getLogger("lottery")
+
+CACHE_FILE = ".db_cache.pkl"
+
+
+def _compute_fingerprint(
+    window_size_years: int,
+    current_popup_id: str,
+    *fns: Callable,
+) -> str:
+    h = hashlib.md5()
+    for root, dirs, files in os.walk("history"):
+        dirs.sort()
+        for fname in sorted(files):
+            path = os.path.join(root, fname)
+            stat = os.stat(path)
+            h.update(f"{path}:{stat.st_mtime}:{stat.st_size}\n".encode())
+    h.update(f"window:{window_size_years}\npopup:{current_popup_id}\n".encode())
+    for fn in fns:
+        h.update(marshal.dumps(fn.__code__))
+    return h.hexdigest()
 
 
 # Datatypes for database entries.
@@ -84,7 +108,7 @@ def get_guests(rows: list[tuple[str, str]]) -> list[Guest]:
         [s.strip() for s in row[0].split(",")] for row in rows
     ]
     emails_list: list[list[str]] = [
-        [s.strip() for s in row[1].split(",")] for row in rows
+        [s.strip().lower() for s in row[1].split(",")] for row in rows
     ]
     all_emails = [email for sublist in emails_list for email in sublist]
     # feed in all emails as flattened list; it will be cached, and then we can just query again for individual rows
@@ -140,7 +164,7 @@ def get_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
         [s.strip() for s in row[0].split(",")] for row in rows
     ]
     emails_list: list[list[str]] = [
-        [s.strip() for s in row[1].split(",")] for row in rows
+        [s.strip().lower() for s in row[1].split(",")] for row in rows
     ]
     notes_list: list[str] = [row[2].strip() for row in rows]
     all_emails = [email for sublist in emails_list for email in sublist]
@@ -179,6 +203,7 @@ class Database:
         group_score_reduce_fn: Callable[[list[float]], float],
         success_penalty_fn: Callable[[float], float],
         weighting_fn: Callable[[float], float],
+        rebuild: bool = False,
     ):
         self.current_popup_id = current_popup_id
         self.window_size_years = window_size_years
@@ -187,6 +212,8 @@ class Database:
         self.weighting_fn = weighting_fn
         # keep track of each guest's score
         self.counts: dict[str, int] = defaultdict(int)
+        # keep track of each guest's lottery attempt history
+        self.attempted: dict[str, list[str]] = defaultdict(list)
         # keep track of each guest's attendance history
         self.attended: dict[str, list[str]] = defaultdict(list)
         self.data_valid = check_history_folder()
@@ -197,7 +224,32 @@ class Database:
             return
 
         self.recent_popup_ids = self.get_recent_popup_ids()
+
+        fingerprint = _compute_fingerprint(
+            window_size_years, current_popup_id,
+            success_penalty_fn,
+        )
+        if not rebuild and os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, "rb") as f:
+                cached = pickle.load(f)
+            if cached.get("fingerprint") == fingerprint:
+                self.counts = defaultdict(int, cached["counts"])
+                self.attempted = defaultdict(list, cached["attempted"])
+                self.attended = defaultdict(list, cached["attended"])
+                logger.info("Loaded database from cache")
+                return
+            logger.info("Cache fingerprint mismatch — rebuilding")
+
         self.history_playback()
+
+        with open(CACHE_FILE, "wb") as f:
+            pickle.dump({
+                "fingerprint": fingerprint,
+                "counts": dict(self.counts),
+                "attempted": dict(self.attempted),
+                "attended": dict(self.attended),
+            }, f)
+        logger.info("Saved database to cache")
 
     def get_recent_popup_ids(self) -> dict[str, datetime]:
         ids: dict[str, datetime] = {}
@@ -242,6 +294,7 @@ class Database:
             guests = flatten_entries(entries)
             for guest in guests:
                 self.counts[guest.email] += 1
+                self.attempted[guest.email].append(popup_id)
         # Then process guests from that popup
         with open(
             f"history/guests/{popup_id}_guests.csv", newline="", encoding="utf-8"
@@ -263,13 +316,20 @@ class Database:
         logger.info("Exporting cumulative scores to `scores.csv`")
         with open("scores.csv", "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(["email", "score"])
-            # Sort scores by score decreasing (alpha order as secondary key)
+            writer.writerow(["email", "score", "popups_attempted", "popups_attended"])
             rows = list(self.counts.items())
-            rows.sort(key=lambda x: x[0])
-            rows.sort(key=lambda x: x[1], reverse=True)
+            rows.sort(
+                key=lambda x: (
+                    x[1],
+                    len(self.attempted.get(x[0], [])),
+                    -len(self.attended.get(x[0], [])),
+                ),
+                reverse=True,
+            )
             for email, score in rows:
-                writer.writerow([email, score])
+                attempted = self.attempted.get(email, [])
+                attended = self.attended.get(email, [])
+                writer.writerow([email, score, ", ".join(attempted), ", ".join(attended)])
 
         logger.info("Exporting past attendance to `past_attendance.csv`")
         with open("past_attendance.csv", "w", newline="", encoding="utf-8") as csvfile:
@@ -302,7 +362,7 @@ class Database:
         def group_score(emails):
             scores = []
             for email in emails:
-                email = email.strip()
+                email = email.strip().lower()
                 score = self.counts.get(email, 0) + 1
                 scores.append(score)
             return self.group_score_reduce_fn(scores)

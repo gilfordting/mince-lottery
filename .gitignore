@@ -1,3 +1,4 @@
 lottery_results_*.csv
 past_attendance.csv
 scores.csv
+.db_cache.pkl
