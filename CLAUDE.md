@@ -80,8 +80,18 @@ Scores can go negative (e.g. if someone attends multiple events back-to-back). O
 1. Ensure `history/lottery/{id}_lottery.csv` exists with signups
 2. Ensure `history/popups.csv` last row matches the new event (name, date, id)
 3. Set `current_popup_id = "{id}"` in `lottery.py`
-4. Run `python lottery.py`
+4. Run `uv run lottery.py`
 5. Results in `lottery_results_{id}.csv`
+
+### Clean lottery signup data
+
+After collecting signups, raw CSV data often has formatting errors (missing emails, wrong delimiters, bare kerbs, etc.). Use the `/clean-lottery` slash command to run the full cleaning pipeline:
+
+```text
+/clean-lottery
+```
+
+This runs `uv run lottery.py` first to identify all `[DATA] Dropping row` lines as the authoritative worklist, then applies four cleaning stages: normalizing email/name formatting, filling in missing names via the MIT People API, filling in missing emails via history cross-reference, and removing unrecoverable rows. Outputs a `changes.md` log and a `review.md` for anything needing human review.
 
 ### Add a new popup to history
 
@@ -92,6 +102,62 @@ Scores can go negative (e.g. if someone attends multiple events back-to-back). O
 ### Record attendance after an event
 
 Fill in `history/guests/{id}_guests.csv` with actual attendees. This data is used in future lottery runs to apply the success penalty.
+
+## Database Internals
+
+`Database` in [database.py](database.py) is the core engine. Construction does all the work; callers then call `export_*` methods to write results.
+
+### State (built during `__init__`)
+
+| Attribute | Type | Meaning |
+| --- | --- | --- |
+| `counts` | `dict[email, float]` | Running score per person across all windowed popups |
+| `attempted` | `dict[email, list[str]]` | Popup IDs where person entered the lottery |
+| `attended` | `dict[email, list[str]]` | Popup IDs where person actually attended |
+
+### Construction flow
+
+1. `check_history_folder()` — validates file/folder structure via `validation.py`; aborts on failure
+2. `get_recent_popup_ids()` — reads `history/popups.csv`, enforces strict ordering, filters to the sliding window, returns `{id: date}` for all past popups (excludes `current_popup_id`)
+3. Cache check — computes an MD5 fingerprint over all `history/` file mtimes + sizes, `window_size_years`, `current_popup_id`, and the bytecode of `success_penalty_fn`; loads `.db_cache.pkl` if fingerprint matches and `rebuild=False`
+4. `history_playback()` — iterates `recent_popup_ids` in order, calling `process_past_popup()` for each: adds `+1` to `counts` for each entrant, then applies `success_penalty_fn` to attendees
+5. Writes cache to `.db_cache.pkl`
+
+### Key helpers
+
+- `get_entries(rows)` — parses a lottery CSV into `Entry` objects; batches all email validation in one `ThreadPoolExecutor` call; handles deduplication (later rows win, removing the person from their prior group too)
+- `process_row(names, emails, email_types)` — validates a single row; drops on mismatched counts, invalid emails, or duplicate emails within a group
+- `get_guests(rows)` — same idea for guest CSVs; expects exactly one person per row
+
+### Export methods
+
+- `export_cumulative_data()` — writes `scores.csv` and `past_attendance.csv`
+- `export_lottery_results(num_samples)` — reads the current popup's lottery CSV, computes group scores and weights, runs `np.random.choice` without replacement, writes `lottery_results_{id}.csv`
+
+## MIT People API
+
+Used to classify emails and look up names during data cleaning.
+
+**Endpoint:** `GET https://mit-people-v3.cloudhub.io/people/v3/people/{kerb}`
+
+**Auth headers:** `client_id` and `client_secret` from `.env`
+
+```bash
+curl -H "client_id: $MIT_PEOPLE_API_CLIENT_ID" \
+     -H "client_secret: $MIT_PEOPLE_API_CLIENT_SECRET" \
+     "https://mit-people-v3.cloudhub.io/people/v3/people/KERB"
+```
+
+**Response:** JSON with `item.affiliations[0].type` — one of `student`, `staff`, or `affiliate`. Non-200 status means kerb not found.
+
+**Kerb format:** MIT emails must match `[a-z0-9_]+@mit.edu`. Anything else is treated as `NON_MIT` without an API call.
+
+**`NOT_FOUND` → `NON_MIT`:** If the API returns non-200 (kerb not in directory), the email is classified as `NON_MIT`, not `INVALID`. This covers alumni and possible typos — there's no way to distinguish them.
+
+**Used in two places:**
+
+- `email_validation.py` — batches requests via `ThreadPoolExecutor` during every lottery run to classify all entry emails
+- `/clean-lottery` Stage 1 — looks up legal names for group members whose name is missing
 
 ## Gotchas
 

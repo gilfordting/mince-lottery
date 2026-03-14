@@ -27,5 +27,22 @@
   - "tbd" guest, or "second is non-mit"
   - "and" instead of comma delimited, or &, or "or"
   - empty lmfao
+- two emails provided, but only one name
 - can inform what we put on the form?
-- fix the errors?
+- fix the errors
+  - also print out all the affiliation types of current emails, and fix stuff that looks wrong (look at non-MIT)
+- also check guest lists -- if name doesn't seem to match email, flag them for review
+- email not provided but name is -- look up in past lotteries? otherwise drop
+- empty rows
+- "Guest"
+- specify two guests with OR LOL
+- things to fix:
+- lowercase kerbs
+- kerb-only entries add @mit.edu
+- email delimiter formatting issues
+  - wrong delimiter: space, and, &, :, ;
+- formatting typos for @mit.edu
+
+## Stats
+
+- how many are non-mit?

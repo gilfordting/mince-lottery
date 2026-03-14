@@ -64,3 +64,8 @@ Only most recent submission will count. We deduplicate entries as follows:
 - database.py will construct a database from a sliding window of the last 5 years
 - TODO: venue info?
 - no email? give a unique ID that will not be duplicated
+
+## AI
+
+- CLAUDE.md -- might need to be periodically updated (put this in the CLAUDE.md itself?)
+- /clean-lottery -- will not always be correct. after the changes have been documented, ask claude to review the changes and see if they followed the rules in clean-lottery.md; if not, fix them
