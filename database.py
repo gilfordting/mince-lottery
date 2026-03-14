@@ -216,6 +216,10 @@ class Database:
         self.attempted: dict[str, list[str]] = defaultdict(list)
         # keep track of each guest's attendance history
         self.attended: dict[str, list[str]] = defaultdict(list)
+        # keep track of each guest's email type (last seen wins)
+        self.email_types: dict[str, EmailType] = {}
+        # keep track of email type counts per popup (for stats export)
+        self.popup_entrant_types: dict[str, dict[str, int]] = {}
         self.data_valid = check_history_folder()
         if not self.data_valid:
             logger.error(
@@ -236,6 +240,8 @@ class Database:
                 self.counts = defaultdict(int, cached["counts"])
                 self.attempted = defaultdict(list, cached["attempted"])
                 self.attended = defaultdict(list, cached["attended"])
+                self.email_types = cached.get("email_types", {})
+                self.popup_entrant_types = cached.get("popup_entrant_types", {})
                 logger.info("Loaded database from cache")
                 return
             logger.info("Cache fingerprint mismatch — rebuilding")
@@ -243,12 +249,17 @@ class Database:
         self.history_playback()
 
         with open(CACHE_FILE, "wb") as f:
-            pickle.dump({
-                "fingerprint": fingerprint,
-                "counts": dict(self.counts),
-                "attempted": dict(self.attempted),
-                "attended": dict(self.attended),
-            }, f)
+            pickle.dump(
+                {
+                    "fingerprint": fingerprint,
+                    "counts": dict(self.counts),
+                    "attempted": dict(self.attempted),
+                    "attended": dict(self.attended),
+                    "email_types": self.email_types,
+                    "popup_entrant_types": self.popup_entrant_types,
+                },
+                f,
+            )
         logger.info("Saved database to cache")
 
     def get_recent_popup_ids(self) -> dict[str, datetime]:
@@ -292,9 +303,13 @@ class Database:
                 [(row["names"], row["emails"], row["notes"]) for row in rows]
             )
             guests = flatten_entries(entries)
+            type_counts: dict[str, int] = defaultdict(int)
             for guest in guests:
                 self.counts[guest.email] += 1
                 self.attempted[guest.email].append(popup_id)
+                self.email_types[guest.email] = guest.email_type
+                type_counts[guest.email_type.value] += 1
+            self.popup_entrant_types[popup_id] = dict(type_counts)
         # Then process guests from that popup
         with open(
             f"history/guests/{popup_id}_guests.csv", newline="", encoding="utf-8"
@@ -307,6 +322,7 @@ class Database:
                 )
                 # Also add to their attendance history
                 self.attended[guest.email].append(popup_id)
+                self.email_types[guest.email] = guest.email_type
 
     def history_playback(self):
         for popup_id, date in self.recent_popup_ids.items():
@@ -316,7 +332,9 @@ class Database:
         logger.info("Exporting cumulative scores to `scores.csv`")
         with open("scores.csv", "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(["email", "score", "popups_attempted", "popups_attended"])
+            writer.writerow(
+                ["email", "email_type", "score", "popups_attempted", "popups_attended"]
+            )
             rows = list(self.counts.items())
             rows.sort(
                 key=lambda x: (
@@ -329,18 +347,28 @@ class Database:
             for email, score in rows:
                 attempted = self.attempted.get(email, [])
                 attended = self.attended.get(email, [])
-                writer.writerow([email, score, ", ".join(attempted), ", ".join(attended)])
+                email_type = self.email_types.get(email, EmailType.NON_MIT).value
+                writer.writerow(
+                    [
+                        email,
+                        email_type,
+                        score,
+                        ", ".join(attempted),
+                        ", ".join(attended),
+                    ]
+                )
 
         logger.info("Exporting past attendance to `past_attendance.csv`")
         with open("past_attendance.csv", "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(["email", "attended_popups"])
+            writer.writerow(["email", "email_type", "attended_popups"])
             # Sort attendance by len(popups) decreasing, then email alpha increasing
             rows = list(self.attended.items())
             rows.sort(key=lambda x: x[0])
             rows.sort(key=lambda x: len(x[1]), reverse=True)
             for email, popups in rows:
-                writer.writerow([email, ", ".join(popups)])
+                email_type = self.email_types.get(email, EmailType.NON_MIT).value
+                writer.writerow([email, email_type, ", ".join(popups)])
 
     # num_samples: number of entries to draw, so the number of people is in [num_samples, 2*num_samples]
     def export_lottery_results(self, num_samples: int):
@@ -378,6 +406,9 @@ class Database:
                 {
                     "names": ", ".join([guest.name for guest in entry.guests]),
                     "emails": ", ".join([guest.email for guest in entry.guests]),
+                    "email_types": ", ".join(
+                        [guest.email_type.value for guest in entry.guests]
+                    ),
                     "notes": entry.notes,
                     "emails_list": emails,
                     "score": score,
@@ -398,6 +429,7 @@ class Database:
                 [
                     "names",
                     "emails",
+                    "email_types",
                     "notes",
                     "score",
                     "weight",
@@ -420,6 +452,7 @@ class Database:
                     [
                         row["names"],
                         row["emails"],
+                        row["email_types"],
                         row["notes"],
                         row["score"],
                         row["weight"],
@@ -427,3 +460,57 @@ class Database:
                         ", ".join(sorted(unique_popups)),
                     ]
                 )
+
+    def export_affiliations(self):
+        logger.info("Exporting affiliation stats to `affiliations.csv`")
+        EMAIL_TYPES = ["student", "staff", "affiliate", "non_mit"]
+
+        # Read current popup's lottery CSV for its stats
+        current_type_counts: dict[str, int] = defaultdict(int)
+        current_input = f"history/lottery/{self.current_popup_id}_lottery.csv"
+        if os.path.exists(current_input):
+            with open(current_input, newline="", encoding="utf-8") as f:
+                rows = list(csv.DictReader(f))
+            entries = get_entries([(r["names"], r["emails"], r["notes"]) for r in rows])
+            for guest in flatten_entries(entries):
+                current_type_counts[guest.email_type.value] += 1
+
+        # Global unique-people counts from self.email_types
+        global_counts: dict[str, int] = defaultdict(int)
+        for email_type in self.email_types.values():
+            global_counts[email_type.value] += 1
+
+        with open("affiliations.csv", "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(
+                [
+                    "popup_id",
+                    "date",
+                    "student",
+                    "staff",
+                    "affiliate",
+                    "non_mit",
+                    "total",
+                ]
+            )
+            for popup_id, date in self.recent_popup_ids.items():
+                counts = self.popup_entrant_types.get(popup_id, {})
+                row_vals = [counts.get(t, 0) for t in EMAIL_TYPES]
+                writer.writerow(
+                    [popup_id, date.strftime("%Y.%m.%d")] + row_vals + [sum(row_vals)]
+                )
+            if current_type_counts:
+                row_vals = [current_type_counts.get(t, 0) for t in EMAIL_TYPES]
+                # Look up current popup date from popups.csv
+                current_date = ""
+                with open("history/popups.csv", newline="", encoding="utf-8") as pf:
+                    for row in csv.DictReader(pf):
+                        if row["id"] == self.current_popup_id:
+                            current_date = row["date"]
+                writer.writerow(
+                    [f"{self.current_popup_id} (current)", current_date]
+                    + row_vals
+                    + [sum(row_vals)]
+                )
+            row_vals = [global_counts.get(t, 0) for t in EMAIL_TYPES]
+            writer.writerow(["TOTAL (unique people)", ""] + row_vals + [sum(row_vals)])

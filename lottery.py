@@ -33,6 +33,7 @@ def main():
     assert db.data_valid, "Database validation failed"
     db.export_cumulative_data()
     db.export_lottery_results(num_samples=100)
+    db.export_affiliations()
 
 
 if __name__ == "__main__":
