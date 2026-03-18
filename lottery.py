@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["numpy", "requests", "python-dotenv"]
+# dependencies = ["numpy", "requests", "python-dotenv", "pyyaml"]
 # ///
 
 from database import Database

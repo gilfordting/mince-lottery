@@ -2,11 +2,12 @@ import concurrent.futures
 import logging
 import os
 import re
+from enum import Enum, auto
 from functools import cache
 
 import requests
+import yaml
 from dotenv import load_dotenv
-from enum import Enum, auto
 
 logger = logging.getLogger("lottery")
 
@@ -21,7 +22,7 @@ class Affiliation(Enum):
     STAFF = auto()
     AFFILIATE = auto()
     NOT_FOUND = auto()
-    NON_MIT = auto()  # valid email, but not MIT-affiliated
+    WRONG_FORMAT = auto()  # email not formatted like MIT email
 
 
 MAX_NUM_RETRIES = 3
@@ -94,18 +95,30 @@ def get_affiliation(kerb: str) -> Affiliation:
     )
     return Affiliation.NOT_FOUND
 
+# These are known to be problematic kerbs (in terms of API/record-keeping), but should be correct
+def _load_problem_kerbs() -> set[str]:
+    path = os.path.join(os.path.dirname(__file__), "history", "problem_kerbs.yaml")
+    with open(path) as f:
+        entries = yaml.safe_load(f)
+    return {entry["kerb"] for entry in entries}
+
+
+EXCEPTIONS = _load_problem_kerbs()
+
 
 def mit_email_affiliation(email: str) -> Affiliation:
     """Returns the affiliation of an email address. First, checks that that the email matches kerb format (lowercase alphanumeric/underscore, 2-8 chars before @mit.edu); then, extracts the kerb and checks affiliation via the MIT People API.
 
     Relevant sources: https://mitadmissions.org/blogs/entry/dont-screw-up-your-username/, https://ist.mit.edu/start/kerberos. Note that the length lower bound for kerbs is actually 2 characters, not 3 (e.g. eo@mit.edu is a valid kerb).
     """
-    # KERB_FORMAT = re.compile(r"^([a-z0-9_]{2,8})@mit\.edu$")
-    KERB_FORMAT = re.compile(r"^([a-z0-9_]+)@mit\.edu$")
+    KERB_FORMAT = re.compile(r"^([a-z0-9_]{2,8})@mit\.edu$")
+    # KERB_FORMAT = re.compile(r"^([a-z0-9_]+)@mit\.edu$")
     match = KERB_FORMAT.match(email)
     if not match:
-        return Affiliation.NON_MIT
+        return Affiliation.WRONG_FORMAT
     kerb = match.group(1)
+    if kerb in EXCEPTIONS:
+        return Affiliation.AFFILIATE
     return get_affiliation(kerb)
 
 
@@ -139,14 +152,13 @@ def email_validation_batch(emails: list[str]) -> list[EmailType]:
                 return EmailType.STAFF
             case Affiliation.AFFILIATE:
                 return EmailType.AFFILIATE
-            case Affiliation.NON_MIT:
-                # properly formatted email, but not MIT-affiliated
+            case Affiliation.WRONG_FORMAT:
+                # correctly formatted email, but not MIT format
+                # kerbs that are too long will trigger this (i.e. very_long_kerb_over_8_characters@mit.edu)
                 return EmailType.NON_MIT
             case Affiliation.NOT_FOUND:
                 # formatted like an MIT email, but not found in the database
-                # return EmailType.INVALID
-                # TODO adjust based on what we want
-                return EmailType.NON_MIT
+                return EmailType.INVALID
             case _:
                 # Will catch errors if we add new affiliation types
                 assert False, "Unhandled affiliation"
