@@ -1,0 +1,10 @@
+# Kerbs that are known to be problematic (i.e. missing from MIT People API) but should be fine. Should be prior guests or people who have entered multiple lotteries.
+# If a problematic kerb only shows up in one lottery entry, just delete the row.
+# This file should be edited by humans.
+
+- kerb: wszeto
+  reason: Winnie Szeto, 2024 -- not in MIT database for some reason
+- kerb: rduran
+  reason: one-time guest for `garden`
+- kerb: witne709
+  reason: one-time guest for `africa`
