@@ -95,6 +95,7 @@ def get_affiliation(kerb: str) -> Affiliation:
     )
     return Affiliation.NOT_FOUND
 
+
 # These are known to be problematic kerbs (in terms of API/record-keeping), but should be correct
 def _load_problem_kerbs() -> set[str]:
     path = os.path.join(os.path.dirname(__file__), "history", "problem_kerbs.yaml")
@@ -103,32 +104,31 @@ def _load_problem_kerbs() -> set[str]:
     return {entry["kerb"] for entry in entries}
 
 
-EXCEPTIONS = _load_problem_kerbs()
+EXCEPTION_KERBS = _load_problem_kerbs()
+
+KERB_FORMAT = re.compile(r"^([a-z0-9_]{2,8})@mit\.edu$")
 
 
 def mit_email_affiliation(email: str) -> Affiliation:
-    """Returns the affiliation of an email address. First, checks that that the email matches kerb format (lowercase alphanumeric/underscore, 2-8 chars before @mit.edu); then, extracts the kerb and checks affiliation via the MIT People API.
+    """Returns the affiliation of an email address. First, checks that the email matches kerb format (lowercase alphanumeric/underscore, 2-8 chars before @mit.edu); then, extracts the kerb and checks affiliation via the MIT People API.
 
     Relevant sources: https://mitadmissions.org/blogs/entry/dont-screw-up-your-username/, https://ist.mit.edu/start/kerberos. Note that the length lower bound for kerbs is actually 2 characters, not 3 (e.g. eo@mit.edu is a valid kerb).
     """
-    KERB_FORMAT = re.compile(r"^([a-z0-9_]{2,8})@mit\.edu$")
-    # KERB_FORMAT = re.compile(r"^([a-z0-9_]+)@mit\.edu$")
     match = KERB_FORMAT.match(email)
     if not match:
         return Affiliation.WRONG_FORMAT
     kerb = match.group(1)
-    if kerb in EXCEPTIONS:
+    if kerb in EXCEPTION_KERBS:
         return Affiliation.AFFILIATE
     return get_affiliation(kerb)
 
 
+EMAIL_FORMAT = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
+
 def is_email(email: str) -> bool:
     """Return True if `email` is a syntactically valid email address."""
-    EMAIL_FORMAT = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
     return EMAIL_FORMAT.match(email) is not None
-
-
-# TODO: fix because we can't differentiate between typo and alum
 
 
 class EmailType(Enum):
@@ -142,7 +142,7 @@ class EmailType(Enum):
 def email_validation_batch(emails: list[str]) -> list[EmailType]:
     """Returns a list of EmailTypes, indicating the category each email falls into. Batches network requests for better performance."""
 
-    def email_validation(email: str) -> bool:
+    def email_validation(email: str) -> EmailType:
         if not is_email(email):
             return EmailType.INVALID
         match mit_email_affiliation(email):

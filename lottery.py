@@ -18,17 +18,20 @@ def data(self, message, *args, **kwargs):
 
 logging.Logger.data = data
 
-# logging.basicConfig(level=logging.DEBUG, format="[%(levelname)s] %(message)s")
 logging.basicConfig(level=DATA, format="[%(levelname)s] %(message)s")
 
+
 def main():
+    # Higher temperature = more uniform weights, more randomness.
+    # Low temperature = more concentrated weights, less randomness.
     temperature = 1
     db = Database(
         current_popup_id="entropy",
         window_size_years=5,
-        group_score_reduce_fn=lambda x: min(x),
+        group_score_reduce_fn=min,
         success_penalty_fn=lambda x: x - 10,
         weighting_fn=lambda x: math.exp(x / temperature),
+        rebuild=True,
     )
     assert db.data_valid, "Database validation failed"
     db.export_cumulative_data()

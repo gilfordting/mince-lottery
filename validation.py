@@ -55,9 +55,9 @@ def check_guests_sheets():
 
         # for guests, we also check that the data inside is valid, since we shouldn't just drop rows with invalid data like for lottery sheets
         with open(path, newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            names = [row["name"].strip() for row in reader]
-            emails = [row["email"].strip() for row in reader]
+            rows = list(csv.DictReader(f))
+            names = [row["name"].strip() for row in rows]
+            emails = [row["email"].strip() for row in rows]
             email_types = email_validation_batch(emails)
 
             for i, (name, email, email_type) in enumerate(

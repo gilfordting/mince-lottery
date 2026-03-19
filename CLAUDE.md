@@ -23,12 +23,14 @@ Before running, edit `lottery.py` to set `current_popup_id` to the ID of the eve
 
 ```text
 history/
-  popups.csv              # Master list of all events (name, date, id)
+  popups.csv                # Master list of all events (name, date, id)
   lottery/{id}_lottery.csv  # Signup entries per event (names, emails, notes)
   guests/{id}_guests.csv    # Actual attendees per event (name, email)
+  problem_kerbs.yaml        # Kerbs with known API issues; treated as AFFILIATE
 
 scores.csv                # Output: cumulative scores per email
 past_attendance.csv       # Output: attendance history per email
+affiliations.csv          # Output: email-type breakdown per popup
 lottery_results_{id}.csv  # Output: selected winners for current event
 ```
 
@@ -39,9 +41,10 @@ lottery_results_{id}.csv  # Output: selected winners for current event
 | popups.csv | `name`, `date` (YYYY.MM.DD), `id` |
 | lottery CSVs | `names`, `emails`, `notes` (names/emails are comma-separated for groups) |
 | guests CSVs | `name`, `email` (one person per row) |
-| scores.csv | `email`, `score`, `popups_attempted`, `popups_attended` |
-| past_attendance.csv | `email`, `attended_popups` |
-| lottery_results | `names`, `emails`, `notes`, `score`, `weight`, `total_popups_attended`, `popups_attended` |
+| scores.csv | `email`, `email_type`, `score`, `popups_attempted`, `popups_attended` |
+| past_attendance.csv | `email`, `email_type`, `attended_popups` |
+| affiliations.csv | `popup_id`, `date`, `student`, `staff`, `affiliate`, `non_mit`, `total` (one row per popup + a TOTAL row) |
+| lottery_results | `names`, `emails`, `email_types`, `notes`, `score`, `weight`, `total_popups_attended`, `popups_attended` |
 
 ## Configuration (in `lottery.py`)
 
@@ -111,7 +114,7 @@ Fill in `history/guests/{id}_guests.csv` with actual attendees. This data is use
 
 | Attribute | Type | Meaning |
 | --- | --- | --- |
-| `counts` | `dict[email, float]` | Running score per person across all windowed popups |
+| `scores` | `dict[email, float]` | Running score per person across all windowed popups |
 | `attempted` | `dict[email, list[str]]` | Popup IDs where person entered the lottery |
 | `attended` | `dict[email, list[str]]` | Popup IDs where person actually attended |
 
@@ -120,7 +123,7 @@ Fill in `history/guests/{id}_guests.csv` with actual attendees. This data is use
 1. `check_history_folder()` — validates file/folder structure via `validation.py`; aborts on failure
 2. `get_recent_popup_ids()` — reads `history/popups.csv`, enforces strict ordering, filters to the sliding window, returns `{id: date}` for all past popups (excludes `current_popup_id`)
 3. Cache check — computes an MD5 fingerprint over all `history/` file mtimes + sizes, `window_size_years`, `current_popup_id`, and the bytecode of `success_penalty_fn`; loads `.db_cache.pkl` if fingerprint matches and `rebuild=False`
-4. `history_playback()` — iterates `recent_popup_ids` in order, calling `process_past_popup()` for each: adds `+1` to `counts` for each entrant, then applies `success_penalty_fn` to attendees
+4. `history_playback()` — iterates `recent_popup_ids` in order, calling `process_past_popup()` for each: adds `+1` to `scores` for each entrant, then applies `success_penalty_fn` to attendees
 5. Writes cache to `.db_cache.pkl`
 
 ### Key helpers
@@ -133,6 +136,7 @@ Fill in `history/guests/{id}_guests.csv` with actual attendees. This data is use
 
 - `export_cumulative_data()` — writes `scores.csv` and `past_attendance.csv`
 - `export_lottery_results(num_samples)` — reads the current popup's lottery CSV, computes group scores and weights, runs `np.random.choice` without replacement, writes `lottery_results_{id}.csv`
+- `export_affiliations()` — writes `affiliations.csv` with per-popup email-type breakdowns (student/staff/affiliate/non_mit) and a global unique-person total row
 
 ## MIT People API
 
@@ -150,9 +154,11 @@ curl -H "client_id: $MIT_PEOPLE_API_CLIENT_ID" \
 
 **Response:** JSON with `item.affiliations[0].type` — one of `student`, `staff`, or `affiliate`. Non-200 status means kerb not found.
 
-**Kerb format:** MIT emails must match `[a-z0-9_]+@mit.edu`. Anything else is treated as `NON_MIT` without an API call.
+**Kerb format:** MIT emails must match `[a-z0-9_]{2,8}@mit.edu` (2–8 lowercase alphanumeric/underscore chars). Anything that doesn't match is classified as `NON_MIT` without an API call. Note: kerbs longer than 8 chars (e.g. `verylongname@mit.edu`) are treated as non-MIT, not invalid.
 
-**`NOT_FOUND` → `NON_MIT`:** If the API returns non-200 (kerb not in directory), the email is classified as `NON_MIT`, not `INVALID`. This covers alumni and possible typos — there's no way to distinguish them.
+**`NOT_FOUND` → `INVALID`:** If the API returns non-200 (kerb not in directory), the email is classified as `INVALID` and the entry is dropped. Alumni have `affiliate` records in the API and will be found normally. `NOT_FOUND` means the kerb genuinely doesn't exist — i.e., a typo. To manually allow a kerb that fails the API check, add it to `history/problem_kerbs.yaml` (those are unconditionally treated as `AFFILIATE`).
+
+**`problem_kerbs.yaml`:** A YAML list of `{kerb: ...}` entries for kerbs that are known to be valid but return non-200 from the API (e.g. staff whose records are missing). These are short-circuited to `AFFILIATE` before the API is called.
 
 **Used in two places:**
 
@@ -164,7 +170,7 @@ curl -H "client_id: $MIT_PEOPLE_API_CLIENT_ID" \
 - **popups.csv ordering is strict:** The last row must match `current_popup_id`. Dates must be monotonically increasing. The code asserts this.
 - **Email validation is slow:** Uses MIT People API with concurrent requests (`ThreadPoolExecutor`). Results are cached in-memory per run only.
 - **MIT People API credentials:** Stored in `.env` as `MIT_PEOPLE_API_CLIENT_ID` and `MIT_PEOPLE_API_CLIENT_SECRET`. Required at runtime.
-- **MIT emails not found in People API resolve to `NON_MIT`**, not `INVALID` — they are allowed to enter the lottery. This affects alumni and possible typos alike (no way to distinguish without further context).
+- **MIT emails not found in People API resolve to `INVALID`** — they are rejected as likely typos. Alumni have active `affiliate` records and are found normally. Add any kerb that legitimately fails the API to `history/problem_kerbs.yaml` as a manual override.
 - **`AFFILIATE` emails are accepted** as valid entrants (not dropped).
 - **Deduplication:** If a person re-submits, their old entry is fully removed — even from groups. The most recent submission wins.
 - **Nepos:** "Nepos" (nepotism/invited guests) are added directly to `guests.csv` without going through the lottery. Document them in notes.
