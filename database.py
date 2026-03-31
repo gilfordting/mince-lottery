@@ -7,13 +7,12 @@ import pickle
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Callable
 from enum import Enum, auto
+from typing import Callable
 
 import numpy as np
 
-from validation import check_history_folder, email_validation_batch, EmailType
-
+from validation import EmailType, check_history_folder, validate_email_batch
 
 logger = logging.getLogger("lottery")
 
@@ -102,15 +101,15 @@ def process_row(
 
 
 # Turns guest spreadsheet from a past popup into list of Guests.
-def get_guests(rows: list[tuple[str, str]]) -> list[Guest]:
+def parse_guests(rows: list[tuple[str, str]]) -> list[Guest]:
     guests = []
     # for each row, get name and email
     names = [name.strip() for name, _ in rows]
     emails = [email.strip().lower() for _, email in rows]
     # feed in all emails as flattened list; it will be cached, and then we can just query again for individual rows
-    _ = email_validation_batch(emails)
+    _ = validate_email_batch(emails)
     for i, (name, email) in enumerate(zip(names, emails), 2):
-        email_types = email_validation_batch([email])
+        email_types = validate_email_batch([email])
         entry, _ = process_row([name], [email], email_types)
         if entry is None:
             logger.data(f"Invalid guest in row {i}: {name}, {email}")
@@ -125,7 +124,7 @@ def get_guests(rows: list[tuple[str, str]]) -> list[Guest]:
 # Turns spreadsheet of lottery entries into list of Entries.
 # Input: list of (names, emails, notes).
 # Emails are normalized (remove whitespace, turn to lowercase) in the output.
-def get_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
+def parse_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
     entries: set[Entry] = set()
     # Maps a guest's email to their entry.
     entry_by_email: dict[str, Entry] = {}
@@ -156,12 +155,12 @@ def get_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
     notes_list: list[str] = [row[2].strip() for row in rows]
     all_emails = [email for sublist in emails_list for email in sublist]
     # feed in all emails as flattened list; it will be cached, and then we can just query again for individual rows
-    _ = email_validation_batch(all_emails)
+    _ = validate_email_batch(all_emails)
 
     for i, (names, emails, notes) in enumerate(
         zip(names_list, emails_list, notes_list), 2
     ):
-        email_types = email_validation_batch(emails)
+        email_types = validate_email_batch(emails)
         entry, drop_reason = process_row(names, emails, email_types, notes)
         if entry is None:
             assert drop_reason != DropReason.NO_DROP, (
@@ -217,7 +216,7 @@ class Database:
             )
             return
 
-        self.recent_popup_ids = self.get_recent_popup_ids()
+        self.recent_popup_ids = self.get_recent_popups()
 
         fingerprint = _compute_fingerprint(
             window_size_years, current_popup_id,
@@ -252,7 +251,7 @@ class Database:
             )
         logger.info("Saved database to cache")
 
-    def get_recent_popup_ids(self) -> dict[str, datetime]:
+    def get_recent_popups(self) -> dict[str, datetime]:
         ids: dict[str, datetime] = {}
         # Find all relevant popup IDs
         window_start = datetime.now() - timedelta(days=self.window_size_years * 365)
@@ -291,7 +290,7 @@ class Database:
             logger.data(
                 f"Processing {len(rows)} lottery entries for popup `{popup_id}`"
             )
-            entries = get_entries(
+            entries = parse_entries(
                 [(row["names"], row["emails"], row["notes"]) for row in rows]
             )
             guests = flatten_entries(entries)
@@ -307,7 +306,7 @@ class Database:
             f"history/guests/{popup_id}_guests.csv", newline="", encoding="utf-8"
         ) as csvfile:
             rows = list(csv.DictReader(csvfile))
-            guests = get_guests([(row["name"], row["email"]) for row in rows])
+            guests = parse_guests([(row["name"], row["email"]) for row in rows])
             for guest in guests:
                 self.scores[guest.email] = self.success_penalty_fn(
                     self.scores[guest.email]
@@ -372,7 +371,7 @@ class Database:
 
         with open(input_file, newline="", encoding="utf-8") as csvfile:
             rows = list(csv.DictReader(csvfile))
-            entries = get_entries(
+            entries = parse_entries(
                 [(row["names"], row["emails"], row["notes"]) for row in rows]
             )
 
@@ -460,7 +459,9 @@ class Database:
         if os.path.exists(current_input):
             with open(current_input, newline="", encoding="utf-8") as f:
                 rows = list(csv.DictReader(f))
-            entries = get_entries([(r["names"], r["emails"], r["notes"]) for r in rows])
+            entries = parse_entries(
+                [(r["names"], r["emails"], r["notes"]) for r in rows]
+            )
             for guest in flatten_entries(entries):
                 current_type_counts[guest.email_type.value] += 1
 

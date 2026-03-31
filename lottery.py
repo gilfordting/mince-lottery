@@ -3,9 +3,10 @@
 # dependencies = ["numpy", "requests", "python-dotenv", "pyyaml"]
 # ///
 
-from database import Database
 import logging
 import math
+
+from database import Database
 
 DATA = 15  # Between DEBUG (10) and INFO (20)
 logging.addLevelName(DATA, "DATA")

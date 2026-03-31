@@ -139,10 +139,10 @@ class EmailType(Enum):
     INVALID = "invalid"  # invalid email (typo or otherwise malformed)
 
 
-def email_validation_batch(emails: list[str]) -> list[EmailType]:
+def validate_email_batch(emails: list[str]) -> list[EmailType]:
     """Returns a list of EmailTypes, indicating the category each email falls into. Batches network requests for better performance."""
 
-    def email_validation(email: str) -> EmailType:
+    def validate_email(email: str) -> EmailType:
         if not is_email(email):
             return EmailType.INVALID
         match mit_email_affiliation(email):
@@ -164,4 +164,4 @@ def email_validation_batch(emails: list[str]) -> list[EmailType]:
                 assert False, "Unhandled affiliation"
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        return list(executor.map(email_validation, emails))
+        return list(executor.map(validate_email, emails))

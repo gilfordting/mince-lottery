@@ -1,9 +1,9 @@
 import csv
-import os
 import logging
+import os
 import re
-from email_validation import EmailType, email_validation_batch
 
+from email_validation import EmailType, validate_email_batch
 
 logger = logging.getLogger("lottery")
 
@@ -58,7 +58,7 @@ def check_guests_sheets():
             rows = list(csv.DictReader(f))
             names = [row["name"].strip() for row in rows]
             emails = [row["email"].strip() for row in rows]
-            email_types = email_validation_batch(emails)
+            email_types = validate_email_batch(emails)
 
             for i, (name, email, email_type) in enumerate(
                 zip(names, emails, email_types), 2
