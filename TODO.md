@@ -42,6 +42,11 @@
 - email delimiter formatting issues
   - wrong delimiter: space, and, &, :, ;
 - formatting typos for @mit.edu
+- therealtaylorswift
+
+## extra things
+
+- allergy handling
 
 ## Stats
 

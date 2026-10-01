@@ -8,3 +8,5 @@
   reason: one-time guest for `garden`
 - kerb: witne709
   reason: one-time guest for `africa`
+- kerb: ammel
+  reason: doesn't validate against API, for some reason

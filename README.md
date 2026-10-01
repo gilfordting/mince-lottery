@@ -5,7 +5,7 @@ HOW TO RUN:
 edit `lottery.py`, then run:
 
 ```sh
-python lottery.py
+uv run lottery.py
 ```
 
 ## Principles
@@ -69,3 +69,7 @@ Only most recent submission will count. We deduplicate entries as follows:
 
 - CLAUDE.md -- might need to be periodically updated (put this in the CLAUDE.md itself?)
 - /clean-lottery -- will not always be correct. after the changes have been documented, ask claude to review the changes and see if they followed the rules in clean-lottery.md; if not, fix them
+
+## notes
+
+- year is not actually used from the form data

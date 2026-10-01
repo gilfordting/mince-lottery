@@ -4,6 +4,7 @@ import logging
 import marshal
 import os
 import pickle
+import time
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -14,7 +15,7 @@ import numpy as np
 
 from validation import EmailType, check_history_folder, validate_email_batch
 
-logger = logging.getLogger("lottery")
+logger = logging.getLogger(__name__)
 
 CACHE_FILE = ".db_cache.pkl"
 EMAIL_TYPES = ["student", "staff", "affiliate", "non_mit"]
@@ -50,10 +51,36 @@ class Guest:
 class Entry:
     guests: tuple[Guest, ...]
     notes: str
+    extra_qs: tuple[str, ...]
+
+
+def load_lottery_entries(
+    popup_id: str, lottery_version: int, group_type: str | None
+) -> list[Entry]:
+    with open(
+        f"history/lottery/{popup_id}_lottery.csv", newline="", encoding="utf-8"
+    ) as f:
+        rows = list(csv.DictReader(f))
+        logger.data(f"Loaded {len(rows)} lottery entries for popup '{popup_id}'")
+    if lottery_version == 2:
+        rows = reformat_sheet_v2(rows, group_type)
+    extra_qs_list = [
+        [row[col] for col in row if col.startswith("extraq")] for row in rows
+    ]
+    return parse_entries(
+        [
+            (row["names"], row["emails"], row["notes"], extra_qs)
+            for row, extra_qs in zip(rows, extra_qs_list)
+        ]
+    )
 
 
 def make_entry(
-    names: list[str], emails: list[str], email_types: list[EmailType], notes: str
+    names: list[str],
+    emails: list[str],
+    email_types: list[EmailType],
+    notes: str,
+    extra_qs: list[str],
 ) -> Entry:
     assert len(names) == len(emails)
     assert len(names) == len(email_types)
@@ -63,6 +90,7 @@ def make_entry(
             for name, email, email_type in zip(names, emails, email_types)
         ),
         notes=notes,
+        extra_qs=tuple(extra_qs),
     )
 
 
@@ -86,7 +114,11 @@ class DropReason(Enum):
 # Process a single row of a lottery entry spreadsheet.
 # Returns None if row has *any* invalid data.
 def process_row(
-    names: list[str], emails: list[str], email_types: list[EmailType], notes=""
+    names: list[str],
+    emails: list[str],
+    email_types: list[EmailType],
+    notes: str = "",
+    extra_qs: list[str] = [],
 ) -> tuple[Entry | None, DropReason]:
     # Mismatched number of names/emails -- throw out
     if len(names) != len(emails):
@@ -97,7 +129,7 @@ def process_row(
     # Duplicate emails within the same entry -- throw out
     if len(set(emails)) != len(emails):
         return None, DropReason.DUPLICATE_EMAILS
-    return make_entry(names, emails, email_types, notes), DropReason.NO_DROP
+    return make_entry(names, emails, email_types, notes, extra_qs), DropReason.NO_DROP
 
 
 # Turns guest spreadsheet from a past popup into list of Guests.
@@ -122,9 +154,9 @@ def parse_guests(rows: list[tuple[str, str]]) -> list[Guest]:
 
 
 # Turns spreadsheet of lottery entries into list of Entries.
-# Input: list of (names, emails, notes).
+# Input: list of (names, emails, notes, extra questions).
 # Emails are normalized (remove whitespace, turn to lowercase) in the output.
-def parse_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
+def parse_entries(rows: list[tuple[str, str, str, list[str]]]) -> list[Entry]:
     entries: set[Entry] = set()
     # Maps a guest's email to their entry.
     entry_by_email: dict[str, Entry] = {}
@@ -134,7 +166,7 @@ def parse_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
         if email not in entry_by_email:
             return
         entry = entry_by_email[email]
-        # If the entry was already removed, we do nothing -- use .discard
+        # If the entry was already removed, we do nothing, so use .discard
         entries.discard(entry)
         del entry_by_email[email]
 
@@ -145,23 +177,18 @@ def parse_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
 
         entries.add(entry)
 
-    # for each row, get all the names and emails
-    names_list: list[list[str]] = [
-        [s.strip() for s in row[0].split(",")] for row in rows
-    ]
-    emails_list: list[list[str]] = [
-        [s.strip().lower() for s in row[1].split(",")] for row in rows
-    ]
-    notes_list: list[str] = [row[2].strip() for row in rows]
-    all_emails = [email for sublist in emails_list for email in sublist]
+    all_emails = [email.strip().lower() for row in rows for email in row[1].split(",")]
     # feed in all emails as flattened list; it will be cached, and then we can just query again for individual rows
     _ = validate_email_batch(all_emails)
 
-    for i, (names, emails, notes) in enumerate(
-        zip(names_list, emails_list, notes_list), 2
-    ):
+    for i, (names_str, emails_str, notes, extra_qs) in enumerate(rows, 2):
+        names = [s.strip() for s in names_str.split(",")]
+        emails = [email.strip().lower() for email in emails_str.split(",")]
+
         email_types = validate_email_batch(emails)
-        entry, drop_reason = process_row(names, emails, email_types, notes)
+        entry, drop_reason = process_row(
+            names, emails, email_types, notes=notes, extra_qs=extra_qs
+        )
         if entry is None:
             assert drop_reason != DropReason.NO_DROP, (
                 "Drop reason should be provided if None is returned"
@@ -182,22 +209,32 @@ def parse_entries(rows: list[tuple[str, str, str]]) -> list[Entry]:
 
     return list(entries)
 
+# We turn newer version of data (v2) back into the old format
+def reformat_sheet_v2(rows: list[dict], group_type: str) -> list[dict]:
+    new_rows = []
+    for row in rows:
+        new_row = dict(row)  # start with all existing fields
+        if group_type == "solo":
+            # convert to known format
+            new_row["names"] = new_row.pop("name")
+            new_row["emails"] = new_row.pop("email")
+        elif group_type == "group":
+            new_row["names"] = f"{new_row.pop('name')}, {new_row.pop('guest_name')}"
+            new_row["emails"] = f"{new_row.pop('email')}, {new_row.pop('guest_email')}"
+        new_rows.append(new_row)
+    return new_rows
 
 class Database:
     def __init__(
         self,
         current_popup_id: str,
         window_size_years: int,
-        group_score_reduce_fn: Callable[[list[float]], float],
         success_penalty_fn: Callable[[float], float],
-        weighting_fn: Callable[[float], float],
         rebuild: bool = False,
     ):
         self.current_popup_id = current_popup_id
         self.window_size_years = window_size_years
-        self.group_score_reduce_fn = group_score_reduce_fn
         self.success_penalty_fn = success_penalty_fn
-        self.weighting_fn = weighting_fn
         # keep track of each guest's score
         self.scores: dict[str, float] = defaultdict(float)
         # keep track of each guest's lottery attempt history
@@ -208,32 +245,47 @@ class Database:
         self.email_types: dict[str, EmailType] = {}
         # keep track of email type counts per popup (for stats export)
         self.popup_entrant_types: dict[str, dict[str, int]] = {}
-        logger.info(f"Initializing database for popup `{current_popup_id}`")
-        self.data_valid = check_history_folder()
-        if not self.data_valid:
-            logger.error(
-                "History folder validation failed. Please fix the errors and try again."
-            )
-            return
+        self.init_db(rebuild)
+
+    # will set .data_valid flag to True if successfully initialized
+    # does stuff with fingerprint, cache
+    def init_db(self, rebuild: bool):
+        logger.info(f"Initializing database for popup `{self.current_popup_id}`")
 
         self.recent_popup_ids = self.get_recent_popups()
 
+        # Note that group_score_reduce and weighting functions are not needed for history playback, so we don't include them in the fingerprint
         fingerprint = _compute_fingerprint(
-            window_size_years, current_popup_id,
-            success_penalty_fn,
+            self.window_size_years,
+            self.current_popup_id,
+            self.success_penalty_fn,
         )
+
         if not rebuild and os.path.exists(CACHE_FILE):
             with open(CACHE_FILE, "rb") as f:
                 cached = pickle.load(f)
-            if cached.get("fingerprint") == fingerprint:
+            cache_age = time.time() - cached.get("timestamp", 0)
+            if cached.get("fingerprint") == fingerprint and cache_age < 600:
                 self.scores = defaultdict(float, cached["scores"])
                 self.attempted = defaultdict(list, cached["attempted"])
                 self.attended = defaultdict(list, cached["attended"])
                 self.email_types = cached.get("email_types", {})
                 self.popup_entrant_types = cached.get("popup_entrant_types", {})
                 logger.info("Loaded database from cache")
+                self.data_valid = True
                 return
-            logger.info("Cache fingerprint mismatch — rebuilding")
+            if cache_age >= 600:
+                logger.info("Cache expired — rebuilding")
+            else:
+                logger.info("Cache fingerprint mismatch — rebuilding")
+
+        self.data_valid = check_history_folder(set(self.recent_popup_ids.keys()) | {self.current_popup_id})
+        if not self.data_valid:
+            logger.error(
+                "History folder validation failed. Please fix the errors and try again."
+            )
+            return
+        logger.info("History folder validated")
 
         self.history_playback()
 
@@ -241,6 +293,7 @@ class Database:
             pickle.dump(
                 {
                     "fingerprint": fingerprint,
+                    "timestamp": time.time(),
                     "scores": dict(self.scores),
                     "attempted": dict(self.attempted),
                     "attended": dict(self.attended),
@@ -251,8 +304,9 @@ class Database:
             )
         logger.info("Saved database to cache")
 
-    def get_recent_popups(self) -> dict[str, datetime]:
-        ids: dict[str, datetime] = {}
+    def get_recent_popups(self) -> dict[str, tuple[datetime, int, str | None]]:
+        # Maps popup ID to (date, lottery version)
+        ids: dict[str, tuple[datetime, int, str | None]] = {}
         # Find all relevant popup IDs
         window_start = datetime.now() - timedelta(days=self.window_size_years * 365)
         logger.info(
@@ -266,7 +320,9 @@ class Database:
                     assert row["id"] == self.current_popup_id, (
                         "The last popup in `popups.csv` should be the current popup"
                     )
-                    break
+                    self.current_popup_version = int(row["lottery_version"])
+                    self.current_popup_group_type = row.get("group_type") or None
+                    break  # Don't put the current popup in the database
                 date = datetime.strptime(row["date"], "%Y.%m.%d")
                 if prev_date is not None:
                     assert date > prev_date, (
@@ -277,30 +333,31 @@ class Database:
                     f'Popup ID "{row["id"]}" is repeated; invariant broken by popup "{row["name"]}"'
                 )
                 if date >= window_start and row["id"] != self.current_popup_id:
-                    ids[row["id"]] = date
+                    ids[row["id"]] = (
+                        date,
+                        int(row["lottery_version"]),
+                        row.get("group_type", None),
+                    )
         logger.info(f"Found {len(ids)} popups: {list(ids.keys())}")
         return ids
 
-    def process_past_popup(self, popup_id: str, date: datetime):
+    def process_past_popup(
+        self,
+        popup_id: str,
+        date: datetime,
+        lottery_version: int,
+        group_type: str | None,
+    ):
         # Process lottery first
-        with open(
-            f"history/lottery/{popup_id}_lottery.csv", newline="", encoding="utf-8"
-        ) as csvfile:
-            rows = list(csv.DictReader(csvfile))
-            logger.data(
-                f"Processing {len(rows)} lottery entries for popup `{popup_id}`"
-            )
-            entries = parse_entries(
-                [(row["names"], row["emails"], row["notes"]) for row in rows]
-            )
-            guests = flatten_entries(entries)
-            type_counts: dict[str, int] = defaultdict(int)
-            for guest in guests:
-                self.scores[guest.email] += 1
-                self.attempted[guest.email].append(popup_id)
-                self.email_types[guest.email] = guest.email_type
-                type_counts[guest.email_type.value] += 1
-            self.popup_entrant_types[popup_id] = dict(type_counts)
+        entries = load_lottery_entries(popup_id, lottery_version, group_type)
+        guests = flatten_entries(entries)
+        type_counts: dict[str, int] = defaultdict(int)
+        for guest in guests:
+            self.scores[guest.email] += 1
+            self.attempted[guest.email].append(popup_id)
+            self.email_types[guest.email] = guest.email_type
+            type_counts[guest.email_type.value] += 1
+        self.popup_entrant_types[popup_id] = dict(type_counts)
         # Then process guests from that popup
         with open(
             f"history/guests/{popup_id}_guests.csv", newline="", encoding="utf-8"
@@ -316,8 +373,12 @@ class Database:
                 self.email_types[guest.email] = guest.email_type
 
     def history_playback(self):
-        for popup_id, date in self.recent_popup_ids.items():
-            self.process_past_popup(popup_id, date)
+        for popup_id, (
+            date,
+            lottery_version,
+            group_type,
+        ) in self.recent_popup_ids.items():
+            self.process_past_popup(popup_id, date, lottery_version, group_type)
 
     def export_cumulative_data(self):
         logger.info("Exporting cumulative scores to `scores.csv`")
@@ -361,34 +422,35 @@ class Database:
                 email_type = self.email_types.get(email, EmailType.NON_MIT).value
                 writer.writerow([email, email_type, ", ".join(popups)])
 
-    def export_lottery_results(self, num_samples: int):
+    def export_lottery_results(self, num_samples: int, group_score_reduce_fn: Callable[[list[float]], float], weighting_fn: Callable[[float], float]):
         """Draw num_samples entries; since entries can be 1-2 people, headcount is in [num_samples, 2*num_samples]."""
         logger.info(
             f"Exporting lottery results to `lottery_results_{self.current_popup_id}.csv`"
         )
-        input_file = f"history/lottery/{self.current_popup_id}_lottery.csv"
         output_file = f"lottery_results_{self.current_popup_id}.csv"
 
-        with open(input_file, newline="", encoding="utf-8") as csvfile:
-            rows = list(csv.DictReader(csvfile))
-            entries = parse_entries(
-                [(row["names"], row["emails"], row["notes"]) for row in rows]
-            )
+        entries = load_lottery_entries(
+            self.current_popup_id,
+            self.current_popup_version,
+            self.current_popup_group_type,
+        )
 
         def group_score(emails):
             scores = []
             for email in emails:
                 score = self.scores.get(email, 0) + 1
                 scores.append(score)
-            return self.group_score_reduce_fn(scores)
+            return group_score_reduce_fn(scores)
 
         guests_data = []
         weights = []
 
+        num_extra_qs = len(entries[0].extra_qs) if entries else 0
+
         for entry in entries:
             emails = [guest.email for guest in entry.guests]
             score = group_score(emails)
-            weight = self.weighting_fn(score)
+            weight = weighting_fn(score)
             guests_data.append(
                 {
                     "names": ", ".join([guest.name for guest in entry.guests]),
@@ -397,6 +459,7 @@ class Database:
                         [guest.email_type.value for guest in entry.guests]
                     ),
                     "notes": entry.notes,
+                    "extra_qs": entry.extra_qs,
                     "emails_list": emails,
                     "score": score,
                     "weight": weight,
@@ -412,6 +475,7 @@ class Database:
             guests_data, size=num_samples, replace=False, p=weights
         )
 
+        extra_q_cols = [f"extraq_{i + 1}" for i in range(num_extra_qs)]
         with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(
@@ -425,6 +489,7 @@ class Database:
                     "total_popups_attended",
                     "popups_attended",
                 ]
+                + extra_q_cols
             )
             for row in selected_rows:
                 attended_counts = []
@@ -448,6 +513,7 @@ class Database:
                         total_attended,
                         ", ".join(sorted(unique_popups)),
                     ]
+                    + list(row["extra_qs"])
                 )
 
     def export_affiliations(self):
@@ -457,10 +523,10 @@ class Database:
         current_type_counts: dict[str, int] = defaultdict(int)
         current_input = f"history/lottery/{self.current_popup_id}_lottery.csv"
         if os.path.exists(current_input):
-            with open(current_input, newline="", encoding="utf-8") as f:
-                rows = list(csv.DictReader(f))
-            entries = parse_entries(
-                [(r["names"], r["emails"], r["notes"]) for r in rows]
+            entries = load_lottery_entries(
+                self.current_popup_id,
+                self.current_popup_version,
+                self.current_popup_group_type,
             )
             for guest in flatten_entries(entries):
                 current_type_counts[guest.email_type.value] += 1
@@ -483,7 +549,7 @@ class Database:
                     "total",
                 ]
             )
-            for popup_id, date in self.recent_popup_ids.items():
+            for popup_id, (date, _, _) in self.recent_popup_ids.items():
                 counts = self.popup_entrant_types.get(popup_id, {})
                 row_vals = [counts.get(t, 0) for t in EMAIL_TYPES]
                 writer.writerow(

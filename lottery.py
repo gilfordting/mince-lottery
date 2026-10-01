@@ -23,20 +23,22 @@ logging.basicConfig(level=DATA, format="[%(levelname)s] %(message)s")
 
 
 def main():
-    # Higher temperature = more uniform weights, more randomness.
-    # Low temperature = more concentrated weights, less randomness.
-    temperature = 1
     db = Database(
-        current_popup_id="entropy",
+        current_popup_id="denmark",
         window_size_years=5,
-        group_score_reduce_fn=min,
         success_penalty_fn=lambda x: x - 10,
-        weighting_fn=lambda x: math.exp(x / temperature),
-        rebuild=True,
+        rebuild=False,
     )
     assert db.data_valid, "Database validation failed"
     db.export_cumulative_data()
-    db.export_lottery_results(num_samples=100)
+    # Higher temperature = more uniform weights, more randomness.
+    # Low temperature = more concentrated weights, less randomness.
+    temperature = 0.5
+    db.export_lottery_results(
+        num_samples=100,
+        group_score_reduce_fn=min,
+        weighting_fn=lambda x: math.exp(x / temperature),
+    )
     db.export_affiliations()
 
 

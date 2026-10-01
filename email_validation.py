@@ -9,7 +9,7 @@ import requests
 import yaml
 from dotenv import load_dotenv
 
-logger = logging.getLogger("lottery")
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 MIT_PEOPLE_API_ENDPOINT = "https://mit-people-v3.cloudhub.io/people/v3/people/"
@@ -48,7 +48,7 @@ def get_affiliation(kerb: str) -> Affiliation:
                 },
                 timeout=10,
             )
-        except requests.exceptions.ConnectionError:
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
             logger.debug(
                 f"Connection error for kerb `{kerb}` (attempt {attempt_i + 1}/{MAX_NUM_RETRIES}), retrying..."
             )
@@ -163,5 +163,9 @@ def validate_email_batch(emails: list[str]) -> list[EmailType]:
                 # Will catch errors if we add new affiliation types
                 assert False, "Unhandled affiliation"
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+    # macOS FD limit is 256, so cap at 200 (each concurrent request holds an open socket, which uses one FD)
+    # Could change this limit with `resources` package, but this is unlikely to help significantly (most lotteries have <200 entries)
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=min(len(emails), 200)
+    ) as executor:
         return list(executor.map(validate_email, emails))

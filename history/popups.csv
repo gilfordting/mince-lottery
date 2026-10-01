@@ -1,22 +1,23 @@
-name,date,id
-Big Bang,2022.09.24,bang
-MISTI Armenia,2022.10.29,armenia
-Fall in New England,2022.11.12,fall
-Night at the Art Gallery,2022.12.03,art
-MISTI India,2023.03.04,india
-Romance Through Films,2023.03.18,datamatch
-High Tea,2023.10.14,tea
-Alice in Wonderland,2023.10.28,alice
-Planet Earth,2023.11.18,earth
-Year of the Dragon,2024.02.24,lny
-MISTI Japan,2024.03.16,japan
-MISTI Italy,2024.04.20,italy
-Garden Soirée,2024.10.05,garden
-Supperclub 1,2024.10.26,supper
-MISTI Brazil,2024.11.16,brazil
-Studio Ghibli,2025.03.01,ghibli
-Seven Wonders of the World,2025.03.15,swotw
-MISTI Africa,2025.04.26,africa
-Untitled,2025.10.04,untitled
-Are you up yet?,2025.11.15,ayuy
-Entropy,2026.03.07,entropy
+name,date,id,lottery_version,group_type
+Big Bang,2022.09.24,bang,1
+MISTI Armenia,2022.10.29,armenia,1
+Fall in New England,2022.11.12,fall,1
+Night at the Art Gallery,2022.12.03,art,1
+MISTI India,2023.03.04,india,1
+Romance Through Films,2023.03.18,datamatch,1
+High Tea,2023.10.14,tea,1
+Alice in Wonderland,2023.10.28,alice,1
+Planet Earth,2023.11.18,earth,1
+Year of the Dragon,2024.02.24,lny,1
+MISTI Japan,2024.03.16,japan,1
+MISTI Italy,2024.04.20,italy,1
+Garden Soirée,2024.10.05,garden,1
+Supperclub 1,2024.10.26,supper,1
+MISTI Brazil,2024.11.16,brazil,1
+Studio Ghibli,2025.03.01,ghibli,1
+Seven Wonders of the World,2025.03.15,swotw,1
+MISTI Africa,2025.04.26,africa,1
+Untitled,2025.10.04,untitled,1
+Are you up yet?,2025.11.15,ayuy,1
+Entropy,2026.03.07,entropy,1
+Hygge,2026.04.04,denmark,2,solo
