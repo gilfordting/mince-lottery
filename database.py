@@ -106,6 +106,7 @@ def flatten_entries(entries: list[Entry]) -> list[Guest]:
 
 class DropReason(Enum):
     MISMATCHED_COUNTS = auto()
+    MISSING_EMAIL = auto()
     INVALID_EMAIL = auto()
     DUPLICATE_EMAILS = auto()
     NO_DROP = auto()
@@ -123,6 +124,9 @@ def process_row(
     # Mismatched number of names/emails -- throw out
     if len(names) != len(emails):
         return None, DropReason.MISMATCHED_COUNTS
+    # Any email left blank (e.g. empty guest_email in a v2 group sheet)? -- throw out
+    if any(not email for email in emails):
+        return None, DropReason.MISSING_EMAIL
     # Any email in the group invalid? -- throw out
     if any(email_type == EmailType.INVALID for email_type in email_types):
         return None, DropReason.INVALID_EMAIL
@@ -196,6 +200,8 @@ def parse_entries(rows: list[tuple[str, str, str, list[str]]]) -> list[Entry]:
             match drop_reason:
                 case DropReason.DUPLICATE_EMAILS:
                     msg = f"duplicate emails {emails}"
+                case DropReason.MISSING_EMAIL:
+                    msg = f"blank email for names: {names}, emails: {emails}"
                 case DropReason.INVALID_EMAIL:
                     msg = f"invalid email in {emails}"
                 case DropReason.MISMATCHED_COUNTS:
@@ -205,6 +211,9 @@ def parse_entries(rows: list[tuple[str, str, str, list[str]]]) -> list[Entry]:
                     assert False, "Unhandled drop reason"
             logger.data(f"Dropping row {i}; {msg}")
             continue
+        # Blank names don't invalidate an entry, but flag them for cleaning
+        if any(not guest.name for guest in entry.guests):
+            logger.data(f"Blank name in row {i}; names: {names}, emails: {emails}")
         add_entry(entry)
 
     return list(entries)

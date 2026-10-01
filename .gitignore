@@ -7,3 +7,6 @@ affiliations.csv
 !.claude/
 .claude/*
 !.claude/commands/
+# Data cleaning reports
+review.md
+changes.md

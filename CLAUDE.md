@@ -10,22 +10,25 @@ Weighted lottery system for MINCE club popup events. Entries are MIT-affiliated 
 uv run lottery.py
 ```
 
-Before running, edit `lottery.py` to set `current_popup_id` to the ID of the event being drawn.
+Before running, edit `lottery.py` to set `current_popup_id` (passed to `Database(...)` in `main()`) to the ID of the event being drawn.
 
 ## File Map
 
 - `lottery.py` — Entry point; all configuration lives here
-- `database.py` — Core logic: `Database` class, `Entry`/`Guest` dataclasses, CSV parsing, scoring, and sampling
-- `validation.py` — Validates folder/file structure before any processing
+- `database.py` — Core logic: `Database` class, `Entry`/`Guest` dataclasses, CSV parsing (v1 and v2 sheets), scoring, and sampling
+- `validation.py` — Validates folder/file structure (metadata sheet, lottery sheets per version, guest sheets) before any processing
 - `email_validation.py` — MIT People API integration; classifies emails as STUDENT/STAFF/AFFILIATE/NON_MIT/INVALID
+- `plot.ipynb` — Scratch notebook for plotting score distributions
+- `TODO.md` — Backlog of algorithm / data-cleaning ideas
+- `.claude/commands/clean-lottery.md` — The `/clean-lottery` slash command
 
 ## Data Layout
 
 ```text
 history/
-  popups.csv                # Master list of all events (name, date, id)
-  lottery/{id}_lottery.csv  # Signup entries per event (names, emails, notes)
-  guests/{id}_guests.csv    # Actual attendees per event (name, email)
+  popups.csv                # Master list of all events (name, date, id, lottery_version, group_type)
+  lottery/{id}_lottery.csv  # Signup entries per event (format depends on lottery_version)
+  guests/{id}_guests.csv    # Actual attendees per event (name, email); not required for the current popup
   problem_kerbs.yaml        # Kerbs with known API issues; treated as AFFILIATE
 
 scores.csv                # Output: cumulative scores per email
@@ -38,26 +41,36 @@ lottery_results_{id}.csv  # Output: selected winners for current event
 
 | File | Columns |
 | ------ | --------- |
-| popups.csv | `name`, `date` (YYYY.MM.DD), `id` |
-| lottery CSVs | `names`, `emails`, `notes` (names/emails are comma-separated for groups) |
+| popups.csv | `name`, `date` (YYYY.MM.DD), `id`, `lottery_version` (`1` or `2`), `group_type` (`solo`/`group`; required for v2, blank for v1) |
+| lottery CSVs (v1) | `names`, `emails`, `notes` — exact match; names/emails are comma-separated for groups |
+| lottery CSVs (v2, `solo`) | `name`, `email`, `notes`, plus optional `extraq_*` columns |
+| lottery CSVs (v2, `group`) | `name`, `email`, `guest_name`, `guest_email`, `notes`, plus optional `extraq_*` columns |
 | guests CSVs | `name`, `email` (one person per row) |
 | scores.csv | `email`, `email_type`, `score`, `popups_attempted`, `popups_attended` |
 | past_attendance.csv | `email`, `email_type`, `attended_popups` |
-| affiliations.csv | `popup_id`, `date`, `student`, `staff`, `affiliate`, `non_mit`, `total` (one row per popup + a TOTAL row) |
-| lottery_results | `names`, `emails`, `email_types`, `notes`, `score`, `weight`, `total_popups_attended`, `popups_attended` |
+| affiliations.csv | `popup_id`, `date`, `student`, `staff`, `affiliate`, `non_mit`, `total` (one row per windowed popup, a `{id} (current)` row, and a `TOTAL (unique people)` row) |
+| lottery_results | `names`, `emails`, `email_types`, `notes`, `score`, `weight`, `total_popups_attended`, `popups_attended`, then `extraq_1..N` if the sheet has extra questions |
+
+### Lottery sheet versions
+
+- **v1** (all popups up through `entropy`): one row per entry, groups packed into comma-separated `names`/`emails` cells. Error-prone — most `/clean-lottery` fixes are delimiter/count mismatches here.
+- **v2** (starting with `denmark`): one column per person. `group_type` in `popups.csv` declares whether the form was `solo` (one person) or `group` (exactly two: `name`/`email` + `guest_name`/`guest_email`). Columns are checked with `columns_exist` (superset allowed), so extra form columns are fine.
+- `reformat_sheet_v2()` in `database.py` converts v2 rows back into the v1 `names`/`emails` shape at load time, so all downstream parsing/scoring is version-agnostic.
+- Any column whose name starts with `extraq` is carried through on `Entry.extra_qs` and echoed into `lottery_results_{id}.csv` (e.g. extra form questions).
 
 ## Configuration (in `lottery.py`)
 
-All policy decisions are passed as plain Python functions to `Database(...)`. This makes it easy to experiment with different fairness or weighting strategies without touching core logic.
+All policy decisions are passed as plain Python functions. History-related ones go to `Database(...)`; draw-related ones go to `db.export_lottery_results(...)`. This makes it easy to experiment with different fairness or weighting strategies without touching core logic.
 
-| Parameter | Type | Meaning |
-| ----------- | ------ | --------- |
-| `current_popup_id` | `str` | ID of event being drawn — **change this each run** |
-| `window_size_years` | `int` | How far back history counts; older events are ignored entirely |
-| `success_penalty_fn` | `(score: float) -> float` | Applied to a person's score when they attend; e.g. `lambda x: x - 10` |
-| `group_score_reduce_fn` | `(scores: list[float]) -> float` | Reduces a group to a single score; e.g. `min` gates groups by their least-lucky member |
-| `weighting_fn` | `(score: float) -> float` | Maps a score to a sampling weight; e.g. `lambda x: math.exp(x / T)` for exponential |
-| `num_samples` | `int` | Number of entries to draw (each entry may be 1–2 people for groups) |
+| Parameter | Passed to | Type | Meaning |
+| ----------- | ----------- | ------ | --------- |
+| `current_popup_id` | `Database` | `str` | ID of event being drawn — **change this each run** |
+| `window_size_years` | `Database` | `int` | How far back history counts; older events are ignored entirely |
+| `success_penalty_fn` | `Database` | `(score: float) -> float` | Applied to a person's score when they attend; e.g. `lambda x: x - 10` |
+| `rebuild` | `Database` | `bool` | `True` forces a history replay, ignoring `.db_cache.pkl` |
+| `num_samples` | `export_lottery_results` | `int` | Number of entries to draw (each entry may be 1–2 people for groups) |
+| `group_score_reduce_fn` | `export_lottery_results` | `(scores: list[float]) -> float` | Reduces a group to a single score; e.g. `min` gates groups by their least-lucky member |
+| `weighting_fn` | `export_lottery_results` | `(score: float) -> float` | Maps a score to a sampling weight; currently `lambda x: math.exp(x / temperature)` with `temperature = 0.5` |
 
 You can swap any of these without touching `database.py`. For example:
 
@@ -80,9 +93,9 @@ Scores can go negative (e.g. if someone attends multiple events back-to-back). O
 
 ### Run a new lottery
 
-1. Ensure `history/lottery/{id}_lottery.csv` exists with signups
-2. Ensure `history/popups.csv` last row matches the new event (name, date, id)
-3. Set `current_popup_id = "{id}"` in `lottery.py`
+1. Ensure `history/lottery/{id}_lottery.csv` exists with signups (columns per its `lottery_version`/`group_type`)
+2. Ensure `history/popups.csv` last row matches the new event (name, date, id, lottery_version, group_type)
+3. Set `current_popup_id="{id}"` in the `Database(...)` call in `lottery.py`
 4. Run `uv run lottery.py`
 5. Results in `lottery_results_{id}.csv`
 
@@ -94,13 +107,13 @@ After collecting signups, raw CSV data often has formatting errors (missing emai
 /clean-lottery
 ```
 
-This runs `uv run lottery.py` first to identify all `[DATA] Dropping row` lines as the authoritative worklist, then applies four cleaning stages: normalizing email/name formatting, filling in missing names via the MIT People API, filling in missing emails via history cross-reference, and removing unrecoverable rows. Outputs a `changes.md` log and a `review.md` for anything needing human review.
+This deletes `.db_cache.pkl` and runs `uv run lottery.py` first to identify all `[DATA] Dropping row` lines as the authoritative worklist, then applies four cleaning stages: normalizing email/name formatting, filling in missing names via the MIT People API, filling in missing emails via history cross-reference, and removing unrecoverable rows. It handles both v1 and v2 sheets. Outputs a `changes.md` log and a `review.md` for anything needing human review.
 
 ### Add a new popup to history
 
-1. Append a row to `history/popups.csv` — dates must be in increasing order
-2. Create `history/lottery/{id}_lottery.csv` with headers: `names,emails,notes`
-3. Create `history/guests/{id}_guests.csv` with headers: `name,email`
+1. Append a row to `history/popups.csv` — dates must be in increasing order. New popups should use `lottery_version` `2` with `group_type` `solo` or `group`
+2. Create `history/lottery/{id}_lottery.csv` with headers matching its version (v2 solo: `name,email,notes`; v2 group: `name,email,guest_name,guest_email,notes`; optional `extraq_*` columns after)
+3. Create `history/guests/{id}_guests.csv` with headers: `name,email` (only required once the popup is no longer the last row)
 
 ### Record attendance after an event
 
@@ -117,25 +130,31 @@ Fill in `history/guests/{id}_guests.csv` with actual attendees. This data is use
 | `scores` | `dict[email, float]` | Running score per person across all windowed popups |
 | `attempted` | `dict[email, list[str]]` | Popup IDs where person entered the lottery |
 | `attended` | `dict[email, list[str]]` | Popup IDs where person actually attended |
+| `email_types` | `dict[email, EmailType]` | Last-seen affiliation per person |
+| `popup_entrant_types` | `dict[popup_id, dict[str, int]]` | Per-popup entrant counts by email type (for `affiliations.csv`) |
+| `recent_popup_ids` | `dict[popup_id, (date, lottery_version, group_type)]` | Windowed past popups, in order |
+| `current_popup_version` / `current_popup_group_type` | `int` / `str \| None` | Sheet format of the popup being drawn |
 
 ### Construction flow
 
-1. `check_history_folder()` — validates file/folder structure via `validation.py`; aborts on failure
-2. `get_recent_popup_ids()` — reads `history/popups.csv`, enforces strict ordering, filters to the sliding window, returns `{id: date}` for all past popups (excludes `current_popup_id`)
-3. Cache check — computes an MD5 fingerprint over all `history/` file mtimes + sizes, `window_size_years`, `current_popup_id`, and the bytecode of `success_penalty_fn`; loads `.db_cache.pkl` if fingerprint matches and `rebuild=False`
+1. `get_recent_popups()` — reads `history/popups.csv`, enforces strict ordering and unique IDs, asserts the last row is `current_popup_id` (recording its version/group type), filters past popups to the sliding window
+2. Cache check — computes an MD5 fingerprint over all `history/` file mtimes + sizes, `window_size_years`, `current_popup_id`, and the bytecode of `success_penalty_fn`; if `rebuild=False`, loads `.db_cache.pkl` when the fingerprint matches **and** the cache is under 10 minutes old (skipping the remaining steps)
+3. `check_history_folder()` — validates `popups.csv`, lottery sheets (v1 exact columns / v2 required columns), and guest sheets via `validation.py`; sets `data_valid=False` and returns on failure
 4. `history_playback()` — iterates `recent_popup_ids` in order, calling `process_past_popup()` for each: adds `+1` to `scores` for each entrant, then applies `success_penalty_fn` to attendees
 5. Writes cache to `.db_cache.pkl`
 
 ### Key helpers
 
-- `get_entries(rows)` — parses a lottery CSV into `Entry` objects; batches all email validation in one `ThreadPoolExecutor` call; handles deduplication (later rows win, removing the person from their prior group too)
-- `process_row(names, emails, email_types)` — validates a single row; drops on mismatched counts, invalid emails, or duplicate emails within a group
-- `get_guests(rows)` — same idea for guest CSVs; expects exactly one person per row
+- `load_lottery_entries(popup_id, lottery_version, group_type)` — reads a lottery CSV, applies `reformat_sheet_v2()` for v2 sheets, collects `extraq*` columns, and hands off to `parse_entries`
+- `reformat_sheet_v2(rows, group_type)` — maps v2 `name`/`email` (+ `guest_name`/`guest_email` for `group`) into v1 `names`/`emails` strings
+- `parse_entries(rows)` — parses rows into `Entry` objects; batches all email validation up front; handles deduplication (later rows win, removing the person from their prior group too)
+- `process_row(names, emails, email_types, notes, extra_qs)` — validates a single row; drops on mismatched counts, blank emails (e.g. an empty `guest_email` in a v2 group sheet), invalid emails, or duplicate emails within a group. Blank *names* don't drop the row but log `[DATA] Blank name in row N` (dropping them would change historical v1 scores)
+- `parse_guests(rows)` — same idea for guest CSVs; expects exactly one person per row
 
 ### Export methods
 
 - `export_cumulative_data()` — writes `scores.csv` and `past_attendance.csv`
-- `export_lottery_results(num_samples)` — reads the current popup's lottery CSV, computes group scores and weights, runs `np.random.choice` without replacement, writes `lottery_results_{id}.csv`
+- `export_lottery_results(num_samples, group_score_reduce_fn, weighting_fn)` — loads the current popup's entries, computes group scores and weights, runs `np.random.choice` without replacement, writes `lottery_results_{id}.csv` (including `extraq_*` columns)
 - `export_affiliations()` — writes `affiliations.csv` with per-popup email-type breakdowns (student/staff/affiliate/non_mit) and a global unique-person total row
 
 ## MIT People API
@@ -168,12 +187,14 @@ curl -H "client_id: $MIT_PEOPLE_API_CLIENT_ID" \
 ## Gotchas
 
 - **popups.csv ordering is strict:** The last row must match `current_popup_id`. Dates must be monotonically increasing. The code asserts this.
+- **popups.csv columns are exact:** Header must be exactly `name,date,id,lottery_version,group_type`. v1 rows leave `group_type` blank; v2 rows must set it to `solo` or `group`.
 - **Email validation is slow:** Uses MIT People API with concurrent requests (`ThreadPoolExecutor`). Results are cached in-memory per run only.
 - **MIT People API credentials:** Stored in `.env` as `MIT_PEOPLE_API_CLIENT_ID` and `MIT_PEOPLE_API_CLIENT_SECRET`. Required at runtime.
 - **MIT emails not found in People API resolve to `INVALID`** — they are rejected as likely typos. Alumni have active `affiliate` records and are found normally. Add any kerb that legitimately fails the API to `history/problem_kerbs.yaml` as a manual override.
 - **`AFFILIATE` emails are accepted** as valid entrants (not dropped).
+- **Blank guest in a v2 group sheet drops the whole row:** `reformat_sheet_v2` always joins in `guest_name`/`guest_email`, so an empty guest becomes a blank email and the row is dropped with `blank email for ...`. This is intentional, so the case isn't silently guessed (forgot the guest vs. coming alone); `/clean-lottery` sends these to `review.md`.
 - **Deduplication:** If a person re-submits, their old entry is fully removed — even from groups. The most recent submission wins.
 - **Nepos:** "Nepos" (nepotism/invited guests) are added directly to `guests.csv` without going through the lottery. Document them in notes.
-- **Cache is always bypassed:** `lottery.py` passes `rebuild=True`, so `.db_cache.pkl` is written but never read. The fingerprint-based cache system in `database.py` exists but is not exercised on normal runs.
+- **Cache is live:** `lottery.py` passes `rebuild=False`, so repeat runs within 10 minutes with unchanged `history/` and config reuse `.db_cache.pkl` and **skip history validation**. The fingerprint only covers `success_penalty_fn`; changing `group_score_reduce_fn`/`weighting_fn` doesn't invalidate it (they aren't used in playback). Set `rebuild=True` or delete `.db_cache.pkl` to force a full rebuild.
 - **Python 3.10+ required:** Uses `match`/`case` statements.
 - **No dry-run mode:** Running `lottery.py` always writes output files.

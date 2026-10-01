@@ -24,7 +24,7 @@ logging.basicConfig(level=DATA, format="[%(levelname)s] %(message)s")
 
 def main():
     db = Database(
-        current_popup_id="denmark",
+        current_popup_id="remince",
         window_size_years=5,
         success_penalty_fn=lambda x: x - 10,
         rebuild=False,
